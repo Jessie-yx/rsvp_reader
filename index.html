@@ -259,8 +259,6 @@ input[type=color]{width:46px;height:46px;border:0;padding:0;background:none;bord
   </div>
 </aside>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
 <script>
 (() => {
 'use strict';
@@ -437,8 +435,48 @@ function extractParagraphs(root){
   return out;
 }
 
+/* Libraries are loaded on demand from a list of CDNs, trying each in turn. */
+const LIB_SOURCES = {
+  jszip: [
+    'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+    'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'
+  ],
+  epub: [
+    'https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js',
+    'https://unpkg.com/epubjs@0.3.93/dist/epub.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.88/epub.min.js',
+    'https://cdn.jsdelivr.net/npm/epubjs@0.3.88/dist/epub.min.js'
+  ]
+};
+function loadScript(url, timeoutMs = 20000){
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    const t = setTimeout(() => { s.remove(); rej(new Error('timeout')); }, timeoutMs);
+    s.src = url; s.async = true;
+    s.onload = () => { clearTimeout(t); res(); };
+    s.onerror = () => { clearTimeout(t); s.remove(); rej(new Error('failed')); };
+    document.head.appendChild(s);
+  });
+}
+async function loadLib(key, test){
+  if (test()) return;
+  const tried = [];
+  for (const url of LIB_SOURCES[key]) {
+    try { await loadScript(url); if (test()) return; tried.push(url + ' (loaded but library missing)'); }
+    catch (e) { tried.push(url + ' (' + e.message + ')'); }
+  }
+  throw new Error('Could not download the ' + (key === 'epub' ? 'EPUB' : 'ZIP') + ' library. Tried: ' + tried.join('; ') +
+    '. If you use a content blocker or private DNS, allow cdn.jsdelivr.net or unpkg.com and retry.');
+}
+async function ensureEpub(){
+  await loadLib('jszip', () => !!window.JSZip);
+  await loadLib('epub', () => !!window.ePub);
+}
+
 async function loadEpub(buf, fallbackTitle){
-  if (!window.ePub) throw new Error('epub.js could not be loaded. Check your internet connection and reload.');
+  setStatus('Loading EPUB library…');
+  await ensureEpub();
   const book = ePub(buf);
   await book.ready;
   let title = fallbackTitle;
