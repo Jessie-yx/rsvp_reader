@@ -142,6 +142,23 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .colorpick .hex{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;text-transform:uppercase}
 .colorpick input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;cursor:pointer}
 .danger{color:#e5484d}
+.tbgroup{display:flex;align-items:center;gap:8px}
+.tbicon{min-width:44px;height:44px;border-radius:22px;background:var(--panel2);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 11px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.tbicon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;flex:none}
+.tbicon.on{color:var(--accent)}
+#btnMark.on svg{fill:var(--accent)}
+.tbicon:active{transform:scale(.94)}
+.scrubwrap{position:relative}
+#markbar{position:absolute;left:14px;right:14px;top:9px;height:18px;pointer-events:none}
+#markbar i{position:absolute;top:0;width:4px;height:18px;margin-left:-2px;border-radius:2px;background:var(--accent);opacity:.9}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 130px);transform:translate(-50%,10px);background:var(--fg);color:var(--bg);
+  padding:10px 18px;border-radius:22px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.mark{display:flex;align-items:center;background:var(--panel2);border-radius:10px;margin-bottom:6px}
+.mark .go{flex:1;min-width:0;text-align:left;padding:11px 12px}
+.mark .go b{display:block;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mark .go small{display:block;color:var(--dim);font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mark .del{width:46px;height:46px;font-size:22px;color:var(--dim);flex:none}
 </style>
 </head>
 <body>
@@ -149,7 +166,11 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
   <header class="topbar ui">
     <button class="pill" id="btnLib">Library</button>
     <div class="title"><div id="docTitle">RSVP Speed Reader</div><div id="chapTitle"></div></div>
-    <button class="pill" id="btnSet">Settings</button>
+    <div class="tbgroup">
+      <button class="tbicon" id="btnMark" title="Bookmark this spot (B)" aria-label="Bookmark this spot"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button>
+      <button class="tbicon" id="btnTimer" title="Auto-pause timer" aria-label="Auto-pause timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="timerTxt"></span></button>
+      <button class="pill" id="btnSet">Settings</button>
+    </div>
   </header>
 
   <main id="stage" aria-label="Reading area. Tap to play or pause.">
@@ -166,7 +187,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
   </main>
 
   <footer class="controls ui">
-    <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Reading position">
+    <div class="scrubwrap"><div id="markbar"></div><input type="range" id="scrub" min="0" max="0" value="0" aria-label="Reading position"></div>
     <div class="stats" id="stats">No text loaded</div>
     <div class="transport">
       <button class="ib" id="bRestart" title="Restart" aria-label="Restart"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg></button>
@@ -185,11 +206,13 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
   </footer>
 </div>
 
+<div id="toast" role="status" aria-live="polite"></div>
 <div id="backdrop"></div>
 <aside id="drawer" aria-hidden="true">
   <div class="dhead">
     <div class="tabs">
       <button class="tab on" data-tab="lib">Library</button>
+      <button class="tab" data-tab="marks">Marks</button>
       <button class="tab" data-tab="set">Settings</button>
     </div>
     <button class="close" id="btnClose" aria-label="Close">&times;</button>
@@ -215,8 +238,29 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
       <div id="chapList"><p class="muted">Load a book to see its chapters.</p></div>
     </section>
 
+    <!-- BOOKMARKS -->
+    <section class="pane" id="pane-marks">
+      <button class="btn primary block" id="btnAddMark">Bookmark current position</button>
+      <h3>Bookmarks in this book</h3>
+      <div id="markList"><p class="muted">No bookmarks yet.</p></div>
+    </section>
+
     <!-- SETTINGS -->
     <section class="pane" id="pane-set">
+      <h3>Auto-pause</h3>
+      <div class="seg">
+        <button data-pref="timer" data-val="off">Off</button>
+        <button data-pref="timer" data-val="chapter">End of chapter</button>
+        <button data-pref="timer" data-val="5">5 min</button>
+        <button data-pref="timer" data-val="10">10 min</button>
+        <button data-pref="timer" data-val="15">15 min</button>
+        <button data-pref="timer" data-val="20">20 min</button>
+        <button data-pref="timer" data-val="30">30 min</button>
+        <button data-pref="timer" data-val="45">45 min</button>
+        <button data-pref="timer" data-val="60">60 min</button>
+      </div>
+      <p class="muted">Minutes count reading time from each press of Play. The clock button at the top cycles through these too.</p>
+
       <h3>Theme</h3>
       <div class="seg">
         <button class="themebtn" data-pref="theme" data-val="dark"><i style="background:#000"></i>Dark</button>
@@ -287,13 +331,13 @@ function loadJSON(k, d){ try { const v = JSON.parse(localStorage.getItem(k)); re
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
 const prefs = Object.assign(
-  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, chunk:1, context:true, warmup:false },
+  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, chunk:1, context:true, warmup:false, timer:'off' },
   loadJSON('rsvp.prefs', {})
 );
 
 const S = {
   words: [], para: new Uint8Array(0), chapters: [], title: '', id: '',
-  cur: 0, next: 0, playing: false, timer: null, due: 0, warmElapsed: 0, lastSave: 0, chapIdx: -1
+  cur: 0, next: 0, playing: false, timer: null, due: 0, warmElapsed: 0, lastSave: 0, chapIdx: -1, timerEnd: 0, marks: []
 };
 
 const el = {
@@ -344,9 +388,12 @@ function Builder(){
     },
     addPara(text){
       text = text
-        .replace(/[\u00ad\u200b\u200c\u200d\ufeff]/g, '')
+        .replace(/[\u200b\u2028\u2029\u2002-\u200a\u202f\u205f\u3000]/g, ' ')   // exotic spaces separate words
+        .replace(/[\u00ad\u200c\u200d\ufeff]/g, '')
         .replace(/\s*--+\s*/g, '\u2014')
-        .replace(/(\S)(\u2014|\u2013)(?=\S)/g, '$1$2 ');
+        .replace(/(\S)(\u2014|\u2013|\u2015)(?=\S)/g, '$1$2 ')
+        .replace(/([a-z]{2,}[.!?]["'\u201d\u2019]?)(?=[A-Z][a-z])/g, '$1 ')      // "end.Next" with a missing space
+        .replace(/([a-z]{2,}[\u2026])(?=[A-Za-z])/g, '$1 ');
       const before = words.length;
       for (const tok of text.split(/\s+/)) {
         if (!tok) continue;
@@ -404,7 +451,8 @@ function ingestText(raw, { title = 'Pasted text', md = false } = {}){
     }
     if (md) block = stripMd(block);
     const flat = block.replace(/\s+/g, ' ');
-    if (!md && flat.length < 70 && !/\n/.test(block) && CHAPTER_RE.test(flat)) b.chapter(flat);
+    const numHead = /^(\d{1,3}|[IVXLC]{1,7})\.?$/.test(flat);
+    if (!md && !/\n/.test(block) && ((flat.length < 70 && CHAPTER_RE.test(flat)) || numHead)) b.chapter(numHead ? 'Chapter ' + flat.replace(/\.$/, '') : flat);
     b.addPara(flat);
   }
   if (!b.words.length) throw new Error('No readable text found.');
@@ -423,19 +471,33 @@ const normHref = h => { try { return decodeURIComponent(String(h).split('#')[0])
 function extractParagraphs(root){
   const body = root.querySelector('body') || root;
   body.querySelectorAll('script,style,nav,svg,noscript,aside,[hidden],a.noteref,sup a').forEach(n => n.remove());
-  const SEL = 'p,h1,h2,h3,h4,h5,h6,li,pre,dt,dd,figcaption,blockquote,td';
-  const out = [];
-  body.querySelectorAll(SEL).forEach(n => {
-    if (n.querySelector(SEL)) return;                 // keep only leaf blocks
-    const t = (n.textContent || '').replace(/\s+/g, ' ').trim();
-    if (t) out.push(t);
-  });
-  const total = (body.textContent || '').split(/\s+/).filter(Boolean).length;
-  const got = out.reduce((a, t) => a + t.split(' ').length, 0);
-  if (got < total * 0.5) {                            // fallback for div/br-only markup
-    return (body.textContent || '').split(/\n+/).map(t => t.replace(/\s+/g, ' ').trim()).filter(Boolean);
-  }
-  return out;
+  // Walk the page: inline text accumulates into one paragraph, block-level tags end it.
+  // Line breaks become spaces, so neighbouring words never fuse together.
+  // Also records where each id/anchor sits (paragraph index) so the table of contents can point inside a file.
+  const BLOCK = /^(p|div|li|tr|td|th|h[1-6]|blockquote|pre|dt|dd|figcaption|figure|section|article|header|footer|main|center|ul|ol|dl|table|tbody|thead|body)$/i;
+  const out = [], anchors = new Map();
+  let buf = '', heading = '';
+  const flush = () => { const t = buf.replace(/\s+/g, ' ').trim(); if (t) out.push(t); buf = ''; };
+  (function walk(node){
+    for (const c of node.childNodes) {
+      if (c.nodeType === 3) { buf += c.nodeValue; continue; }
+      if (c.nodeType !== 1) continue;
+      const tag = c.localName || '';
+      if (/^(br|wbr|hr)$/i.test(tag)) { buf += ' '; continue; }
+      const isBlock = BLOCK.test(tag);
+      if (isBlock) flush();
+      const id = c.getAttribute('id') || (/^a$/i.test(tag) ? c.getAttribute('name') : '');
+      if (id && !anchors.has(id)) anchors.set(id, out.length);
+      if (!heading && /^h[1-3]$/i.test(tag)) {
+        const t = (c.textContent || '').replace(/\s+/g, ' ').trim();
+        if (t && t.length < 80) heading = t;
+      }
+      walk(c);
+      if (isBlock) flush();
+    }
+  })(body);
+  flush();
+  return { paras: out, anchors, heading };
 }
 
 /* NATIVE-EPUB-START
@@ -512,21 +574,22 @@ async function loadEpubNative(buf, fallbackTitle){
   const spine = Array.from(opf.querySelectorAll('spine > itemref'))
     .map(r => ({ id: r.getAttribute('idref'), linear: r.getAttribute('linear') }));
 
-  // chapter titles from the EPUB3 nav document, or the EPUB2 NCX
-  const toc = new Map();
+  // Table of contents, in reading order. Each entry: file, optional #anchor inside the file, label.
+  const toc = [];
+  const addEntry = (base, href, label) => {
+    label = (label || '').replace(/\s+/g, ' ').trim();
+    if (!label || !href) return;
+    toc.push({ path: resolvePath(base, href), frag: safeDec(String(href).split('#')[1] || ''), label });
+  };
   try {
     const navItem = Object.values(man).find(m => /\bnav\b/.test(m.props));
     if (navItem) {
       const nd = xml(await zip.text(navItem.href), 'application/xhtml+xml');
       const navs = Array.from(nd.querySelectorAll('nav'));
       const tn = navs.find(n => /toc/.test(n.getAttribute('epub:type') || '')) || navs[0];
-      if (tn) tn.querySelectorAll('a').forEach(a => {
-        const path = resolvePath(navItem.href, a.getAttribute('href') || '');
-        const label = a.textContent.replace(/\s+/g, ' ').trim();
-        if (label && !toc.has(path)) toc.set(path, label);
-      });
+      if (tn) tn.querySelectorAll('a').forEach(a => addEntry(navItem.href, a.getAttribute('href'), a.textContent));
     }
-    if (!toc.size) {
+    if (!toc.length) {
       const sp = opf.querySelector('spine');
       const ncxId = sp && sp.getAttribute('toc');
       const ncx = (ncxId && man[ncxId]) || Object.values(man).find(m => m.type === 'application/x-dtbncx+xml');
@@ -534,14 +597,13 @@ async function loadEpubNative(buf, fallbackTitle){
         const nd = xml(await zip.text(ncx.href));
         nd.querySelectorAll('navPoint').forEach(np => {
           const c = np.querySelector('content'), l = np.querySelector('navLabel > text');
-          if (!c || !l) return;
-          const path = resolvePath(ncx.href, c.getAttribute('src') || '');
-          const label = l.textContent.replace(/\s+/g, ' ').trim();
-          if (label && !toc.has(path)) toc.set(path, label);
+          if (c && l) addEntry(ncx.href, c.getAttribute('src'), l.textContent);
         });
       }
     }
-  } catch (e) { /* titles are optional */ }
+  } catch (e) { /* the TOC is optional; headings are the fallback */ }
+  const byFile = new Map();
+  toc.forEach(e => { if (!byFile.has(e.path)) byFile.set(e.path, []); byFile.get(e.path).push(e); });
 
   const b = Builder();
   let n = 0;
@@ -550,20 +612,36 @@ async function loadEpubNative(buf, fallbackTitle){
     setStatus(`Reading section ${n} of ${spine.length}…`);
     const m = man[sp.id];
     if (!m || sp.linear === 'no' || /\bnav\b/.test(m.props) || !/html/.test(m.type)) continue;
-    let paras;
+    let res;
     try {
       const src = await zip.text(m.href);
       let doc = xml(src, 'application/xhtml+xml');
       if (doc.querySelector('parsererror')) doc = xml(src, 'text/html');
-      paras = extractParagraphs(doc.documentElement);
+      res = extractParagraphs(doc.documentElement);
     } catch (e) { continue; }
+    const paras = res.paras;
     const wc = paras.reduce((a, t) => a + t.split(' ').length, 0);
     if (wc < 8) continue;
-    let ctitle = toc.get(m.href) || '';
-    if (ctitle && SKIP_TITLE_RE.test(ctitle) && wc < 800) continue;   // boilerplate
-    if (!ctitle) ctitle = paras[0].length < 70 ? paras[0] : `Section ${n}`;
-    b.chapter(ctitle.slice(0, 90));
-    paras.forEach(p => b.addPara(p));
+
+    // Where do chapters start inside this file? (paragraph index -> title)
+    const starts = new Map();
+    const entries = byFile.get(m.href) || [];
+    if (entries.length) {
+      for (const e of entries) {
+        let pi = e.frag && res.anchors.has(e.frag) ? res.anchors.get(e.frag) : 0;
+        starts.set(Math.min(pi, paras.length - 1), e.label);       // deepest/last entry wins at the same spot
+      }
+    } else if (res.heading && (wc >= 150 || !toc.length)) {
+      starts.set(0, res.heading);                                    // file missing from an incomplete TOC
+    } else if (!toc.length) {
+      starts.set(0, paras[0].length < 70 ? paras[0] : `Section ${n}`);
+    }                                                                // otherwise: continuation of the previous chapter
+
+    if (starts.size === 1) {
+      const lab = [...starts.values()][0];
+      if (SKIP_TITLE_RE.test(lab) && wc < 800) continue;             // copyright, contents, etc.
+    }
+    paras.forEach((p, i) => { if (starts.has(i)) b.chapter(starts.get(i).slice(0, 90)); b.addPara(p); });
     await new Promise(r => setTimeout(r, 0));
   }
   if (!b.words.length) throw new Error('No readable text found in this EPUB.');
@@ -641,7 +719,7 @@ async function loadEpubLib(buf, fallbackTitle){
     let paras = [];
     try {
       const doc = await item.load(book.load.bind(book));
-      paras = extractParagraphs(doc);
+      paras = extractParagraphs(doc).paras;
       item.unload();
     } catch (e) { continue; }
     const wc = paras.reduce((a, t) => a + t.split(' ').length, 0);
@@ -756,6 +834,12 @@ function tick(){
   S.timer = null;
   if (!S.playing) return;
   if (S.next >= S.words.length) { finish(); return; }
+  if (S.timerEnd && performance.now() >= S.timerEnd) { pause(); toast('Auto-paused: your timer ran out'); return; }
+  if (prefs.timer === 'chapter' && chapterAt(S.next) !== chapterAt(S.cur)) {
+    pause(); seek(S.next);                      // wait on the first word of the next chapter
+    toast('Auto-paused at the end of the chapter');
+    return;
+  }
   const late = Math.min(Math.max(performance.now() - S.due, 0), 40);   // drift correction
   S.cur = S.next;
   S.next = display(S.cur);
@@ -792,6 +876,7 @@ function play(){
   if (S.next >= S.words.length) seek(0);
   S.playing = true;
   S.warmElapsed = 0;
+  S.timerEnd = typeof prefs.timer === 'number' ? performance.now() + prefs.timer * 60000 : 0;
   document.body.classList.add('playing');
   el.play.innerHTML = ICON_PAUSE;
   lockScreen();
@@ -802,10 +887,12 @@ function pause(){
   clearTimeout(S.timer); S.timer = null;
   const was = S.playing;
   S.playing = false;
+  S.timerEnd = 0;
   document.body.classList.remove('playing', 'idle');
   el.play.innerHTML = ICON_PLAY;
   unlockScreen();
   if (was) { savePos(true); updateUI(); }
+  updateTimerBtn();
 }
 const toggle = () => S.playing ? pause() : play();
 
@@ -843,6 +930,8 @@ function updateUI(){
   const eff = Math.round(effWpm());
   el.wpmLabel.textContent = (S.playing && prefs.warmup && eff < prefs.wpm - 2) ? `${eff} \u2192 ${prefs.wpm} WPM` : `${prefs.wpm} WPM`;
 
+  updateMarkBtn();
+  updateTimerBtn();
   if (S.playing) savePos(false);
 }
 
@@ -869,6 +958,80 @@ function nudgeUI(){
   if (S.playing) idleT = setTimeout(() => document.body.classList.add('idle'), 2500);
 }
 ['pointerdown', 'pointermove', 'keydown', 'touchstart'].forEach(ev => addEventListener(ev, nudgeUI, { passive: true }));
+
+/* =====================================================================
+   Toast, auto-pause button, bookmarks
+   ===================================================================== */
+let toastT;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+const TIMER_STEPS = ['off', 'chapter', 5, 10, 15, 20, 30, 45, 60];
+function updateTimerBtn(){
+  const b = $('#btnTimer'), tx = $('#timerTxt');
+  let t = '';
+  if (prefs.timer === 'chapter') t = 'chapter';
+  else if (typeof prefs.timer === 'number') {
+    if (S.playing && S.timerEnd) {
+      const left = Math.max(0, S.timerEnd - performance.now());
+      t = Math.floor(left / 60000) + ':' + String(Math.floor(left % 60000 / 1000)).padStart(2, '0');
+    } else t = prefs.timer + 'm';
+  }
+  tx.textContent = t;
+  b.classList.toggle('on', prefs.timer !== 'off');
+}
+
+const marksKey = () => 'rsvp.marks.' + S.id;
+function loadMarks(){ const m = loadJSON(marksKey(), []); S.marks = Array.isArray(m) ? m : []; }
+function saveMarks(){ if (S.id) saveJSON(marksKey(), S.marks); }
+const nearMark = pos => S.marks.findIndex(m => Math.abs(m.pos - pos) <= 2);
+
+function addMark(){
+  if (!S.words.length) { toast('Load some text first'); return; }
+  const near = nearMark(S.cur);
+  if (near >= 0) {
+    S.marks.splice(near, 1); saveMarks(); renderMarks(); updateMarkBtn();
+    toast('Bookmark removed'); return;
+  }
+  const ci = chapterAt(S.cur);
+  S.marks.push({
+    pos: S.cur,
+    text: S.words.slice(S.cur, S.cur + 8).join(' '),
+    chap: S.chapters.length > 1 ? S.chapters[ci].title : '',
+    t: Date.now()
+  });
+  S.marks.sort((a, b) => a.pos - b.pos);
+  saveMarks(); renderMarks(); updateMarkBtn();
+  toast('Bookmarked');
+}
+function updateMarkBtn(){ $('#btnMark').classList.toggle('on', nearMark(S.cur) >= 0); }
+
+function renderMarks(){
+  const list = $('#markList'), bar = $('#markbar');
+  list.innerHTML = ''; bar.innerHTML = '';
+  const n = S.words.length;
+  if (!S.marks.length) { list.innerHTML = '<p class="muted">No bookmarks yet. Tap the bookmark button at the top while reading, or press B.</p>'; return; }
+  S.marks.forEach((m, i) => {
+    const row = document.createElement('div'); row.className = 'mark';
+    const go = document.createElement('button'); go.className = 'go';
+    const b = document.createElement('b'); b.textContent = m.text + '…';
+    const s = document.createElement('small');
+    const pct = n > 1 ? Math.round(m.pos / (n - 1) * 100) : 0;
+    s.textContent = [m.chap, pct + '%', 'word ' + (m.pos + 1).toLocaleString()].filter(Boolean).join(' · ');
+    go.append(b, s);
+    go.onclick = () => { seek(m.pos); closeDrawer(); };
+    const del = document.createElement('button'); del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', 'Delete bookmark');
+    del.onclick = () => { S.marks.splice(i, 1); saveMarks(); renderMarks(); updateMarkBtn(); };
+    row.append(go, del); list.appendChild(row);
+    const dot = document.createElement('i');
+    dot.style.left = (n > 1 ? m.pos / (n - 1) * 100 : 0) + '%';
+    bar.appendChild(dot);
+  });
+}
 
 /* =====================================================================
    Loading documents
@@ -903,6 +1066,8 @@ async function loadDoc(doc, { pos = 0, autoplay = false, persist = true } = {}){
   S.chapIdx = -1;
   el.docTitle.textContent = S.title;
   renderChapters();
+  loadMarks();
+  renderMarks();
   seek(pos);
   if (persist) {
     saveJSON('rsvp.pos', { id: S.id, pos });
@@ -983,6 +1148,7 @@ function applyPrefs(){
   $('#accentHex').textContent = prefs.accent;
   el.wpm.value = prefs.wpm;
   el.wpmLabel.textContent = `${prefs.wpm} WPM`;
+  updateTimerBtn();
 }
 function commitPrefs(redraw = true){
   saveJSON('rsvp.prefs', prefs);
@@ -1102,11 +1268,11 @@ $('#btnClear').addEventListener('click', async () => {
   if (!confirm('Remove the saved book and reading position from this device?')) return;
   pause();
   try { await DB.del('current'); } catch {}
-  try { localStorage.removeItem('rsvp.pos'); } catch {}
+  try { localStorage.removeItem('rsvp.pos'); localStorage.removeItem(marksKey()); } catch {}
   S.words = []; S.para = new Uint8Array(0); S.chapters = []; S.id = ''; S.cur = S.next = 0; S.chapIdx = -1;
   el.docTitle.textContent = 'RSVP Speed Reader'; el.chapTitle.textContent = '';
   paint('Load a text', 2); el.ctx.textContent = '';
-  renderChapters(); updateUI(); openDrawer('lib');
+  renderChapters(); S.marks = []; renderMarks(); updateUI(); openDrawer('lib');
 });
 
 document.addEventListener('click', e => { const b = e.target.closest('button'); if (b) b.blur(); });
@@ -1123,8 +1289,22 @@ addEventListener('keydown', e => {
     case 'ArrowUp': e.preventDefault(); setWpm(prefs.wpm + 25); break;
     case 'ArrowDown': e.preventDefault(); setWpm(prefs.wpm - 25); break;
     case 'r': case 'R': seek(0); break;
+    case 'b': case 'B': addMark(); break;
   }
 });
+
+$('#btnMark').addEventListener('click', addMark);
+$('#btnAddMark').addEventListener('click', addMark);
+$('#btnTimer').addEventListener('click', () => {
+  const i = TIMER_STEPS.indexOf(prefs.timer);
+  prefs.timer = TIMER_STEPS[(i + 1) % TIMER_STEPS.length];
+  if (S.playing) S.timerEnd = typeof prefs.timer === 'number' ? performance.now() + prefs.timer * 60000 : 0;
+  commitPrefs(false);
+  toast(prefs.timer === 'off' ? 'Auto-pause off'
+      : prefs.timer === 'chapter' ? 'Will pause at the end of the chapter'
+      : `Will pause after ${prefs.timer} min of reading`);
+});
+setInterval(updateTimerBtn, 1000);
 
 document.addEventListener('gesturestart', e => e.preventDefault());
 addEventListener('resize', fit);
