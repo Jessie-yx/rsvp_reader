@@ -136,7 +136,11 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .row input[type=checkbox]:checked{background:var(--accent)}
 .row input[type=checkbox]:checked::after{transform:translateX(22px)}
 .sizeprev{font-family:var(--font);font-size:22px;margin-top:4px;color:var(--dim)}
-input[type=color]{width:46px;height:46px;border:0;padding:0;background:none;border-radius:50%;flex:none}
+.colorpick{position:relative;display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border-radius:12px;background:var(--panel2);cursor:pointer}
+.colorpick .chip{width:34px;height:34px;border-radius:50%;background:var(--accent);border:2px solid var(--fg);flex:none}
+.colorpick .lbl{flex:1;font-weight:600;font-size:15px}
+.colorpick .hex{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;text-transform:uppercase}
+.colorpick input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;cursor:pointer}
 .danger{color:#e5484d}
 </style>
 </head>
@@ -222,13 +226,12 @@ input[type=color]{width:46px;height:46px;border:0;padding:0;background:none;bord
       </div>
 
       <h3>Focus letter colour</h3>
-      <div class="seg">
-        <button class="sw" data-pref="accent" data-val="#e63946" style="background:#e63946" aria-label="Crimson red"></button>
-        <button class="sw" data-pref="accent" data-val="#00e5ff" style="background:#00e5ff" aria-label="Neon cyan"></button>
-        <button class="sw" data-pref="accent" data-val="#ff7a1a" style="background:#ff7a1a" aria-label="Sunset orange"></button>
-        <button class="sw" data-pref="accent" data-val="#7cfc00" style="background:#7cfc00" aria-label="Lime green"></button>
-        <input type="color" id="accentCustom" value="#e63946" aria-label="Custom colour">
-      </div>
+      <label class="colorpick">
+        <span class="chip" id="accentChip"></span>
+        <span class="lbl">Tap to choose any colour</span>
+        <span class="hex" id="accentHex"></span>
+        <input type="color" id="accentCustom" value="#e63946" aria-label="Focus letter colour">
+      </label>
 
       <h3>Typeface</h3>
       <div class="seg">
@@ -435,7 +438,150 @@ function extractParagraphs(root){
   return out;
 }
 
-/* Libraries are loaded on demand from a list of CDNs, trying each in turn. */
+/* NATIVE-EPUB-START
+   Built-in EPUB reader: no CDN needed. Uses the browser's DecompressionStream
+   (Safari 16.4+, Chrome 80+, Firefox 113+) to unzip, and DOMParser for the XML. */
+const safeDec = s => { try { return decodeURIComponent(s); } catch { return s; } };
+async function inflateRaw(bytes){
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function readZip(buf){
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let eocd = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('Not a valid EPUB (zip directory not found).');
+  const count = dv.getUint16(eocd + 10, true), cdOff = dv.getUint32(eocd + 16, true);
+  const dec = new TextDecoder('utf-8');
+  const entries = new Map();
+  let p = cdOff;
+  for (let k = 0; k < count; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    const lho = dv.getUint32(p + 42, true);
+    entries.set(dec.decode(u8.subarray(p + 46, p + 46 + nlen)), { method, csize, lho });
+    p += 46 + nlen + elen + clen;
+  }
+  return {
+    async read(name){
+      let e = entries.get(name);
+      if (!e) for (const [k, v] of entries) if (safeDec(k) === name) { e = v; break; }
+      if (!e) throw new Error('Missing file in EPUB: ' + name);
+      const nl = dv.getUint16(e.lho + 26, true), el = dv.getUint16(e.lho + 28, true);
+      const start = e.lho + 30 + nl + el;
+      const data = u8.subarray(start, start + e.csize);
+      if (e.method === 0) return data;
+      if (e.method === 8) return inflateRaw(data);
+      throw new Error('Unsupported zip compression in EPUB.');
+    },
+    async text(name){ return dec.decode(await this.read(name)); }
+  };
+}
+function resolvePath(baseFile, rel){
+  rel = safeDec(String(rel).split('#')[0]);
+  if (rel.startsWith('/')) return rel.slice(1);
+  const parts = baseFile.split('/').slice(0, -1);
+  for (const seg of rel.split('/')) { if (seg === '..') parts.pop(); else if (seg && seg !== '.') parts.push(seg); }
+  return parts.join('/');
+}
+
+async function loadEpubNative(buf, fallbackTitle){
+  const zip = await readZip(buf);
+  const xml = (s, t = 'application/xml') => new DOMParser().parseFromString(s, t);
+
+  const container = xml(await zip.text('META-INF/container.xml'));
+  const rf = container.querySelector('rootfile');
+  if (!rf) throw new Error('Not a valid EPUB (no package file).');
+  const opfPath = rf.getAttribute('full-path');
+  const opf = xml(await zip.text(opfPath));
+
+  const tEl = opf.getElementsByTagNameNS('*', 'title')[0];
+  const title = (tEl && tEl.textContent.trim()) || fallbackTitle;
+
+  const man = {};
+  opf.querySelectorAll('manifest > item').forEach(it => {
+    man[it.getAttribute('id')] = {
+      href: resolvePath(opfPath, it.getAttribute('href') || ''),
+      props: it.getAttribute('properties') || '',
+      type: it.getAttribute('media-type') || ''
+    };
+  });
+  const spine = Array.from(opf.querySelectorAll('spine > itemref'))
+    .map(r => ({ id: r.getAttribute('idref'), linear: r.getAttribute('linear') }));
+
+  // chapter titles from the EPUB3 nav document, or the EPUB2 NCX
+  const toc = new Map();
+  try {
+    const navItem = Object.values(man).find(m => /\bnav\b/.test(m.props));
+    if (navItem) {
+      const nd = xml(await zip.text(navItem.href), 'application/xhtml+xml');
+      const navs = Array.from(nd.querySelectorAll('nav'));
+      const tn = navs.find(n => /toc/.test(n.getAttribute('epub:type') || '')) || navs[0];
+      if (tn) tn.querySelectorAll('a').forEach(a => {
+        const path = resolvePath(navItem.href, a.getAttribute('href') || '');
+        const label = a.textContent.replace(/\s+/g, ' ').trim();
+        if (label && !toc.has(path)) toc.set(path, label);
+      });
+    }
+    if (!toc.size) {
+      const sp = opf.querySelector('spine');
+      const ncxId = sp && sp.getAttribute('toc');
+      const ncx = (ncxId && man[ncxId]) || Object.values(man).find(m => m.type === 'application/x-dtbncx+xml');
+      if (ncx) {
+        const nd = xml(await zip.text(ncx.href));
+        nd.querySelectorAll('navPoint').forEach(np => {
+          const c = np.querySelector('content'), l = np.querySelector('navLabel > text');
+          if (!c || !l) return;
+          const path = resolvePath(ncx.href, c.getAttribute('src') || '');
+          const label = l.textContent.replace(/\s+/g, ' ').trim();
+          if (label && !toc.has(path)) toc.set(path, label);
+        });
+      }
+    }
+  } catch (e) { /* titles are optional */ }
+
+  const b = Builder();
+  let n = 0;
+  for (const sp of spine) {
+    n++;
+    setStatus(`Reading section ${n} of ${spine.length}…`);
+    const m = man[sp.id];
+    if (!m || sp.linear === 'no' || /\bnav\b/.test(m.props) || !/html/.test(m.type)) continue;
+    let paras;
+    try {
+      const src = await zip.text(m.href);
+      let doc = xml(src, 'application/xhtml+xml');
+      if (doc.querySelector('parsererror')) doc = xml(src, 'text/html');
+      paras = extractParagraphs(doc.documentElement);
+    } catch (e) { continue; }
+    const wc = paras.reduce((a, t) => a + t.split(' ').length, 0);
+    if (wc < 8) continue;
+    let ctitle = toc.get(m.href) || '';
+    if (ctitle && SKIP_TITLE_RE.test(ctitle) && wc < 800) continue;   // boilerplate
+    if (!ctitle) ctitle = paras[0].length < 70 ? paras[0] : `Section ${n}`;
+    b.chapter(ctitle.slice(0, 90));
+    paras.forEach(p => b.addPara(p));
+    await new Promise(r => setTimeout(r, 0));
+  }
+  if (!b.words.length) throw new Error('No readable text found in this EPUB.');
+  return b.finish(title);
+}
+/* NATIVE-EPUB-END */
+
+async function loadEpub(buf, fallbackTitle){
+  let nativeErr = null;
+  if (typeof DecompressionStream !== 'undefined') {
+    try { return await loadEpubNative(buf, fallbackTitle); }
+    catch (e) { nativeErr = e; console.warn('Built-in EPUB reader failed, trying epub.js', e); }
+  }
+  try { return await loadEpubLib(buf, fallbackTitle); }
+  catch (e) { throw nativeErr || e; }
+}
+
+/* Fallback only: epub.js is loaded on demand from a list of CDNs, trying each in turn. */
 const LIB_SOURCES = {
   jszip: [
     'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
@@ -474,7 +620,7 @@ async function ensureEpub(){
   await loadLib('epub', () => !!window.ePub);
 }
 
-async function loadEpub(buf, fallbackTitle){
+async function loadEpubLib(buf, fallbackTitle){
   setStatus('Loading EPUB library…');
   await ensureEpub();
   const book = ePub(buf);
@@ -832,7 +978,9 @@ function applyPrefs(){
   $('#sizePrev').textContent = prefs.size + ' px';
   $('#optContext').checked = prefs.context;
   $('#optWarm').checked = prefs.warmup;
-  $('#accentCustom').value = /^#[0-9a-f]{6}$/i.test(prefs.accent) ? prefs.accent : '#e63946';
+  if (!/^#[0-9a-f]{6}$/i.test(prefs.accent)) prefs.accent = '#e63946';
+  $('#accentCustom').value = prefs.accent;
+  $('#accentHex').textContent = prefs.accent;
   el.wpm.value = prefs.wpm;
   el.wpmLabel.textContent = `${prefs.wpm} WPM`;
 }
