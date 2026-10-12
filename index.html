@@ -158,6 +158,8 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .mark .go{flex:1;min-width:0;text-align:left;padding:11px 12px}
 .mark .go b{display:block;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mark .go small{display:block;color:var(--dim);font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book.on{outline:2px solid var(--accent)}
+#bookList{margin-bottom:4px}
 .mark .del{width:46px;height:46px;font-size:22px;color:var(--dim);flex:none}
 </style>
 </head>
@@ -234,7 +236,10 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
       </div>
       <div id="status"></div>
 
-      <h3>Chapters</h3>
+      <h3>Your books</h3>
+      <div id="bookList"></div>
+
+      <h3>Chapters in this book</h3>
       <div id="chapList"><p class="muted">Load a book to see its chapters.</p></div>
     </section>
 
@@ -300,7 +305,8 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
       <label class="row"><span>Warm-up (ramp speed over 30 s)</span><input type="checkbox" id="optWarm"></label>
 
       <h3>Data</h3>
-      <button class="btn block danger" id="btnClear">Clear saved book &amp; progress</button>
+      <button class="btn block danger" id="btnClear">Delete all books, bookmarks &amp; progress</button>
+      <p class="muted">Nothing is ever removed unless you press this button, or the &times; beside a book in the Library tab.</p>
       <p class="muted">Keyboard: Space play/pause, &larr;/&rarr; &plusmn;10 words, &uarr;/&darr; speed, R restart.</p>
     </section>
   </div>
@@ -862,6 +868,7 @@ function seek(i){
   S.cur = i;
   S.next = display(i);
   updateUI();
+  clearTimeout(S.saveT); S.saveT = setTimeout(() => savePos(true), 400);   // remember manual jumps too
   if (S.playing) scheduleNext();
 }
 
@@ -939,7 +946,7 @@ function savePos(force){
   const now = Date.now();
   if (!force && now - S.lastSave < 2000) return;
   S.lastSave = now;
-  if (S.id) saveJSON('rsvp.pos', { id: S.id, pos: S.cur });
+  if (S.id) saveJSON('rsvp.pos.' + S.id, S.cur);
 }
 
 function setWpm(v){
@@ -1056,26 +1063,145 @@ function renderChapters(){
   });
 }
 
-async function loadDoc(doc, { pos = 0, autoplay = false, persist = true } = {}){
+/* =====================================================================
+   Library: any number of books are kept side by side on this device.
+   Nothing is deleted unless you delete it.
+   ===================================================================== */
+let lib = loadJSON('rsvp.library', []);
+if (!Array.isArray(lib)) lib = [];
+const saveLib = () => saveJSON('rsvp.library', lib);
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const posKey = id => 'rsvp.pos.' + id;
+const bookPos = id => { const v = Number(loadJSON(posKey(id), 0)); return Number.isFinite(v) && v > 0 ? v : 0; };
+
+/* Store a freshly parsed book. Re-adding the same title replaces its text but keeps your place and bookmarks. */
+async function registerDoc(doc, { byTitle = false } = {}){
+  let meta = lib.find(b => b.title === doc.title && (byTitle || b.words === doc.words.length));
+  const id = meta ? meta.id : newId();
+  doc.id = id;
+  try {
+    await DB.put('book:' + id, { id, title: doc.title, words: doc.words, para: doc.para, chapters: doc.chapters });
+  } catch (e) {
+    setStatus('This book is open, but your browser would not let me store it for later.', true);
+    return { pos: 0, saved: false };
+  }
+  let pos = 0;
+  if (!meta) {
+    lib.push({ id, title: doc.title, words: doc.words.length, added: Date.now(), opened: Date.now() });
+  } else {
+    pos = bookPos(id);
+    if (meta.words !== doc.words.length && meta.words > 1) {          // text changed length: keep the same relative place
+      const f = doc.words.length > 1 ? (doc.words.length - 1) / (meta.words - 1) : 0;
+      pos = Math.round(pos * f);
+      const marks = loadJSON('rsvp.marks.' + id, []);
+      if (Array.isArray(marks)) saveJSON('rsvp.marks.' + id, marks.map(m => Object.assign({}, m, { pos: Math.round(m.pos * f) })));
+    }
+    meta.words = doc.words.length;
+  }
+  saveLib();
+  return { pos, saved: true };
+}
+
+async function loadDoc(doc, { pos = 0, autoplay = false } = {}){
+  if (S.id) savePos(true);                       // remember where we were in the book we're leaving
   pause();
   S.words = doc.words;
   S.para = doc.para instanceof Uint8Array ? doc.para : Uint8Array.from(doc.para || []);
   S.chapters = doc.chapters;
   S.title = doc.title;
-  S.id = doc.id || Date.now().toString(36);
+  S.id = doc.id || newId();
   S.chapIdx = -1;
   el.docTitle.textContent = S.title;
   renderChapters();
   loadMarks();
   renderMarks();
-  seek(pos);
-  if (persist) {
-    saveJSON('rsvp.pos', { id: S.id, pos });
-    try { await DB.put('current', { id: S.id, title: S.title, words: S.words, para: S.para, chapters: S.chapters }); }
-    catch (e) { setStatus('Loaded, but this browser would not let me save the book for next time.', true); }
-  }
+  seek(Math.min(Math.max(0, pos), S.words.length - 1));
+  const meta = lib.find(b => b.id === S.id);
+  if (meta) { meta.opened = Date.now(); saveLib(); }
+  saveJSON('rsvp.current', S.id);
+  savePos(true);
+  renderLibrary();
   closeDrawer();
   if (autoplay) setTimeout(play, 350);
+}
+
+async function openBook(id){
+  if (id === S.id) { closeDrawer(); return; }
+  setStatus('Opening…');
+  try {
+    const doc = await DB.get('book:' + id);
+    if (!doc || !doc.words || !doc.words.length) throw new Error('That book is no longer stored on this device.');
+    await loadDoc(doc, { pos: bookPos(id) });
+    setStatus('');
+  } catch (e) { setStatus(e.message || 'Could not open that book.', true); }
+}
+
+function resetReader(){
+  pause();
+  S.words = []; S.para = new Uint8Array(0); S.chapters = []; S.id = ''; S.cur = S.next = 0; S.chapIdx = -1; S.marks = [];
+  try { localStorage.removeItem('rsvp.current'); } catch {}
+  el.docTitle.textContent = 'RSVP Speed Reader'; el.chapTitle.textContent = '';
+  paint('Load a text', 2); el.ctx.textContent = '';
+  renderChapters(); renderMarks(); updateUI();
+}
+
+async function deleteBook(id){
+  const m = lib.find(b => b.id === id);
+  if (!m) return;
+  if (!confirm('Delete “' + m.title + '”, with its bookmarks and progress, from this device?')) return;
+  try { await DB.del('book:' + id); } catch {}
+  lib = lib.filter(b => b.id !== id); saveLib();
+  try { localStorage.removeItem(posKey(id)); localStorage.removeItem('rsvp.marks.' + id); } catch {}
+  if (id === S.id) resetReader();
+  renderLibrary();
+}
+async function deleteEverything(){
+  if (!confirm('Delete ALL books, bookmarks and reading progress from this device?')) return;
+  pause();
+  for (const m of lib) {
+    try { await DB.del('book:' + m.id); } catch {}
+    try { localStorage.removeItem(posKey(m.id)); localStorage.removeItem('rsvp.marks.' + m.id); } catch {}
+  }
+  try { await DB.del('current'); localStorage.removeItem('rsvp.pos'); } catch {}
+  lib = []; saveLib();
+  resetReader(); renderLibrary(); openDrawer('lib');
+}
+
+function renderLibrary(){
+  const box = $('#bookList');
+  box.innerHTML = '';
+  if (!lib.length) { box.innerHTML = '<p class="muted">Books you load are kept here until you delete them.</p>'; return; }
+  [...lib].sort((a, b) => b.opened - a.opened).forEach(m => {
+    const row = document.createElement('div'); row.className = 'mark book' + (m.id === S.id ? ' on' : '');
+    const go = document.createElement('button'); go.className = 'go';
+    const t = document.createElement('b'); t.textContent = m.title;
+    const pos = m.id === S.id ? S.cur : bookPos(m.id);
+    const pct = m.words > 1 ? Math.min(100, Math.round(pos / (m.words - 1) * 100)) : 0;
+    const s = document.createElement('small'); s.textContent = m.words.toLocaleString() + ' words · ' + pct + '% read' + (m.id === S.id ? ' · open now' : '');
+    go.append(t, s);
+    go.onclick = () => openBook(m.id);
+    const del = document.createElement('button'); del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', 'Delete book');
+    del.onclick = () => deleteBook(m.id);
+    row.append(go, del); box.appendChild(row);
+  });
+}
+
+/* Earlier versions kept a single book under the key "current"; move it into the library once. */
+async function migrateLegacy(){
+  if (localStorage.getItem('rsvp.library') !== null) return;
+  try {
+    const old = await DB.get('current');
+    if (old && old.words && old.words.length) {
+      const id = old.id || newId();
+      await DB.put('book:' + id, Object.assign({}, old, { id }));
+      const p = loadJSON('rsvp.pos', {});
+      if (p && p.id === old.id) saveJSON(posKey(id), p.pos || 0);
+      lib.push({ id, title: old.title, words: old.words.length, added: Date.now(), opened: Date.now() });
+      saveJSON('rsvp.current', id);
+      await DB.del('current');
+    }
+    saveLib();
+  } catch (e) { /* try again next launch; nothing has been deleted */ }
 }
 
 function readFile(file, mode){
@@ -1104,7 +1230,8 @@ async function handleFile(file){
       doc = ingestText(await readFile(file, 'text'), { title: base });
     }
     setStatus(`Loaded ${doc.words.length.toLocaleString()} words.`);
-    await loadDoc(doc, { autoplay: false });
+    const r = await registerDoc(doc, { byTitle: true });
+    await loadDoc(doc, { pos: r.pos });
   } catch (e) {
     console.error(e);
     setStatus(e.message || 'Could not open that file.', true);
@@ -1116,6 +1243,7 @@ async function handleFile(file){
    ===================================================================== */
 function openDrawer(tab){
   if (S.playing) pause();
+  renderLibrary();
   if (tab) showTab(tab);
   el.drawer.classList.add('open'); el.backdrop.classList.add('open');
   el.drawer.setAttribute('aria-hidden', 'false');
@@ -1245,7 +1373,8 @@ $('#btnLoad').addEventListener('click', async () => {
     const head = raw.trim().split(/\s+/).slice(0, 5).join(' ');
     const doc = ingestText(raw, { title: head.length > 38 ? head.slice(0, 38) + '…' : head });
     setStatus('');
-    await loadDoc(doc, { autoplay: true });
+    const r = await registerDoc(doc);
+    await loadDoc(doc, { pos: r.pos, autoplay: true });
   } catch (e) { setStatus(e.message, true); }
 });
 
@@ -1264,16 +1393,7 @@ $('#size').addEventListener('input', e => { prefs.size = +e.target.value; commit
 $('#optContext').addEventListener('change', e => { prefs.context = e.target.checked; commitPrefs(); });
 $('#optWarm').addEventListener('change', e => { prefs.warmup = e.target.checked; commitPrefs(false); });
 
-$('#btnClear').addEventListener('click', async () => {
-  if (!confirm('Remove the saved book and reading position from this device?')) return;
-  pause();
-  try { await DB.del('current'); } catch {}
-  try { localStorage.removeItem('rsvp.pos'); localStorage.removeItem(marksKey()); } catch {}
-  S.words = []; S.para = new Uint8Array(0); S.chapters = []; S.id = ''; S.cur = S.next = 0; S.chapIdx = -1;
-  el.docTitle.textContent = 'RSVP Speed Reader'; el.chapTitle.textContent = '';
-  paint('Load a text', 2); el.ctx.textContent = '';
-  renderChapters(); S.marks = []; renderMarks(); updateUI(); openDrawer('lib');
-});
+$('#btnClear').addEventListener('click', deleteEverything);
 
 document.addEventListener('click', e => { const b = e.target.closest('button'); if (b) b.blur(); });
 
@@ -1321,16 +1441,19 @@ async function boot(){
   el.play.innerHTML = ICON_PLAY;
   paint('Welcome', 2);
   setupPWA();
+  // Ask the browser not to evict our storage when the device is short on space.
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
+  await migrateLegacy();
+  renderLibrary();
   let restored = false;
   try {
-    const doc = await DB.get('current');
-    if (doc && doc.words && doc.words.length) {
-      const p = loadJSON('rsvp.pos', {});
-      const pos = p.id === doc.id ? (p.pos || 0) : 0;
-      await loadDoc(doc, { pos, persist: false });
-      restored = true;
+    let id = loadJSON('rsvp.current', '');
+    if (!lib.some(b => b.id === id)) id = lib.length ? [...lib].sort((a, b) => b.opened - a.opened)[0].id : '';
+    if (id) {
+      const doc = await DB.get('book:' + id);
+      if (doc && doc.words && doc.words.length) { await loadDoc(doc, { pos: bookPos(id) }); restored = true; }
     }
-  } catch (e) { /* no saved book */ }
+  } catch (e) { /* nothing stored yet */ }
   if (!restored) openDrawer('lib');
 }
 boot();
