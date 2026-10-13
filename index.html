@@ -41,15 +41,17 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 
 /* ---------- top bar ---------- */
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px}
-.pill{min-height:44px;padding:0 18px;border-radius:22px;background:var(--panel2);font-size:15px;font-weight:600;white-space:nowrap}
+.topbar{display:flex;align-items:center;gap:10px;padding:8px 12px}
+.tb{width:46px;height:46px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;flex:none}
+.tb svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb:active{transform:scale(.94)}
 .title{flex:1;min-width:0;text-align:center;line-height:1.25}
 #docTitle{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #chapTitle{font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.25em}
 
 /* ---------- stage ---------- */
 #stage{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  position:relative;cursor:pointer;padding:0 8px}
+  position:relative;cursor:pointer;padding:0 8px;overflow:hidden}
 .focus{position:relative;width:min(94vw,1100px);padding:.5em 0;font-size:var(--size);
   border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-family:var(--font)}
 .tick{position:absolute;left:50%;width:2px;height:16px;margin-left:-1px;background:var(--accent);opacity:.85}
@@ -67,22 +69,30 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 body.playing #hint{opacity:0}
 
 /* ---------- controls ---------- */
-.controls{width:100%;max-width:900px;margin:0 auto;padding:6px 20px 18px}
+.controls{width:100%;max-width:640px;margin:0 auto;padding:2px 16px 12px}
 .ui{transition:opacity .6s}
 body.playing.idle .ui{opacity:.12}
-.stats{text-align:center;font-size:14px;color:var(--dim);font-variant-numeric:tabular-nums;margin:2px 0 10px}
-.transport{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px}
-.ib{width:52px;height:52px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-weight:700;font-size:15px}
+.stats{text-align:center;font-size:13.5px;line-height:1.35;color:var(--dim);font-variant-numeric:tabular-nums;margin:0 0 8px}
+.transport{display:flex;align-items:center;gap:8px}
+.transport.main{justify-content:center;margin:0 auto 10px;max-width:460px}
+.ib{border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-weight:700;font-size:15px;flex:none;width:52px;height:52px}
 .ib svg{width:24px;height:24px;fill:currentColor}
-.ib.txt{width:62px;border-radius:26px;font-variant-numeric:tabular-nums}
+.ib.txt{flex:1 1 0;min-width:0;max-width:76px;width:auto;height:54px;border-radius:27px;font-variant-numeric:tabular-nums}
 .ib.play{width:76px;height:76px;background:var(--accent);color:#fff}
 .ib.play svg{width:34px;height:34px}
-.ib.sm{width:44px;height:44px;font-size:22px}
-.ib:active,.pill:active{transform:scale(.94)}
-.ib[disabled]{opacity:.35;pointer-events:none}
-.wpmrow{display:flex;align-items:center;gap:10px}
-.wpmrow input{flex:1}
-#wpmLabel{min-width:128px;text-align:right;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.ib.sm{width:46px;height:46px;font-size:24px}
+.ib:active,.sb:active{transform:scale(.95)}
+.ib[disabled],.sb[disabled]{opacity:.35;pointer-events:none}
+.transport.sub{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px}
+.sb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:58px;min-width:0;border-radius:14px;background:var(--panel2);color:var(--fg)}
+.sb svg{width:22px;height:22px;flex:none}
+.sb span{font-size:11px;font-weight:600;color:var(--dim);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.sb.on,.sb.on span{color:var(--accent)}
+#btnMark.on svg{fill:var(--accent)}
+.wpmtop{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim);font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:0 4px}
+#wpmLabel{font-size:15px;color:var(--fg);text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+.wpmrow{display:flex;align-items:center;gap:8px}
+.wpmrow input{flex:1;min-width:0}
 
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;margin:0}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--line)}
@@ -117,7 +127,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 #status{margin-top:12px;font-size:14px;min-height:1.3em;color:var(--dim)}
 #status.err{color:#e5484d}
 #drop.drag{outline:2px dashed var(--accent)}
-#chapList{display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow-y:auto}
+#chapList{display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow-y:auto;padding:2px}
 .chap{display:flex;justify-content:space-between;gap:10px;text-align:left;padding:11px 12px;border-radius:10px;background:var(--panel2);font-size:15px}
 .chap small{color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
 .chap.on{outline:2px solid var(--accent)}
@@ -142,16 +152,10 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .colorpick .hex{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;text-transform:uppercase}
 .colorpick input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;cursor:pointer}
 .danger{color:#e5484d}
-.tbgroup{display:flex;align-items:center;gap:8px}
-.tbicon{min-width:44px;height:44px;border-radius:22px;background:var(--panel2);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 11px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
-.tbicon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;flex:none}
-.tbicon.on{color:var(--accent)}
-#btnMark.on svg{fill:var(--accent)}
-.tbicon:active{transform:scale(.94)}
 .scrubwrap{position:relative}
 #markbar{position:absolute;left:14px;right:14px;top:9px;height:18px;pointer-events:none}
 #markbar i{position:absolute;top:0;width:4px;height:18px;margin-left:-2px;border-radius:2px;background:var(--accent);opacity:.9}
-#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 130px);transform:translate(-50%,10px);background:var(--fg);color:var(--bg);
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 68px);transform:translate(-50%,-10px);background:var(--fg);color:var(--bg);
   padding:10px 18px;border-radius:22px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .mark{display:flex;align-items:center;background:var(--panel2);border-radius:10px;margin-bottom:6px}
@@ -161,18 +165,46 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .book.on{outline:2px solid var(--accent)}
 #bookList{margin-bottom:4px}
 .mark .del{width:46px;height:46px;font-size:22px;color:var(--dim);flex:none}
+.mark .edit{width:42px;height:46px;flex:none;display:grid;place-items:center;color:var(--dim)}
+.mark .edit svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mark.editing{display:block;padding:12px}
+.editform label{display:block;font-size:12.5px;color:var(--dim);margin:0 0 4px}
+.editform input[type=text]{width:100%;min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 12px;font:16px system-ui,-apple-system,sans-serif;margin-bottom:10px;-webkit-user-select:text;user-select:text}
+.editform .acts{display:flex;gap:8px}
+.editform .acts .btn{flex:1;min-height:44px}
+.chap span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chap small{flex:none}
+@media (max-width:520px){ #drawer{width:100vw} .focus{width:96vw} }
+@media (max-width:360px){ .sb span{font-size:10px;letter-spacing:-.1px} .controls{padding-left:12px;padding-right:12px} }
+@media (min-width:700px){
+  .controls{max-width:720px;padding:6px 24px 20px}
+  .ib{width:60px;height:60px}
+  .ib.txt{max-width:88px;height:62px;border-radius:31px;font-size:16px}
+  .ib.play{width:88px;height:88px}
+  .sb{height:66px}.sb svg{width:25px;height:25px}.sb span{font-size:12.5px}
+  .tb{width:50px;height:50px}
+  .stats{font-size:15px}
+}
+@media (max-height:520px) and (orientation:landscape){
+  .topbar{padding:4px 12px}.tb{width:44px;height:44px}
+  #hint,#context{display:none}
+  .controls{max-width:none;display:flex;flex-wrap:wrap;align-items:center;column-gap:18px;padding:0 16px 8px}
+  .scrubwrap,.stats,.wpmblock{flex:1 1 100%}
+  .stats{margin:0 0 2px}
+  .transport.main{flex:1 1 44%;margin:0;max-width:none}
+  .transport.sub{flex:1 1 44%;margin:0}
+  .ib,.ib.txt{height:46px}.ib{width:46px}.ib.play{width:58px;height:58px}
+  .sb{height:46px}.sb span{display:none}
+  input[type=range]{height:28px}
+}
 </style>
 </head>
 <body>
 <div id="app">
   <header class="topbar ui">
-    <button class="pill" id="btnLib">Library</button>
+    <button class="tb" id="btnLib" title="Library" aria-label="Library and books"><svg viewBox="0 0 24 24"><path d="M5 4h4v16H5zM11 4h4v16h-4zM17.2 5.4l3.2.9-3.6 13.6-3.2-.9z"/></svg></button>
     <div class="title"><div id="docTitle">RSVP Speed Reader</div><div id="chapTitle"></div></div>
-    <div class="tbgroup">
-      <button class="tbicon" id="btnMark" title="Bookmark this spot (B)" aria-label="Bookmark this spot"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button>
-      <button class="tbicon" id="btnTimer" title="Auto-pause timer" aria-label="Auto-pause timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="timerTxt"></span></button>
-      <button class="pill" id="btnSet">Settings</button>
-    </div>
+    <button class="tb" id="btnSet" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.4"/><circle cx="8" cy="17" r="2.4"/></svg></button>
   </header>
 
   <main id="stage" aria-label="Reading area. Tap to play or pause.">
@@ -191,19 +223,27 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
   <footer class="controls ui">
     <div class="scrubwrap"><div id="markbar"></div><input type="range" id="scrub" min="0" max="0" value="0" aria-label="Reading position"></div>
     <div class="stats" id="stats">No text loaded</div>
-    <div class="transport">
-      <button class="ib" id="bRestart" title="Restart" aria-label="Restart"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg></button>
-      <button class="ib" id="bPrevCh" title="Previous chapter" aria-label="Previous chapter"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM20 6v12L9.5 12z"/></svg></button>
+    <div class="transport main">
+      <button class="ib txt" id="bBackBig" title="Back 50 words" aria-label="Back 50 words">&minus;50</button>
       <button class="ib txt" id="bBack" title="Back 10 words" aria-label="Back 10 words">&minus;10</button>
       <button class="ib play" id="bPlay" title="Play / pause" aria-label="Play or pause"></button>
       <button class="ib txt" id="bFwd" title="Forward 10 words" aria-label="Forward 10 words">+10</button>
-      <button class="ib" id="bNextCh" title="Next chapter" aria-label="Next chapter"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM4 6v12l10.5-6z"/></svg></button>
+      <button class="ib txt" id="bFwdBig" title="Forward 50 words" aria-label="Forward 50 words">+50</button>
     </div>
-    <div class="wpmrow">
-      <button class="ib sm" id="wMinus" aria-label="Slower">&minus;</button>
-      <input type="range" id="wpm" min="150" max="1000" step="10" value="300" aria-label="Words per minute">
-      <button class="ib sm" id="wPlus" aria-label="Faster">+</button>
-      <span id="wpmLabel">300 WPM</span>
+    <div class="transport sub">
+      <button class="sb" id="bRestart" title="Restart" aria-label="Restart"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg><span>Restart</span></button>
+      <button class="sb" id="bPrevCh" title="Previous chapter" aria-label="Previous chapter"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12L9.5 12z"/></svg><span>Prev. ch.</span></button>
+      <button class="sb" id="btnMark" title="Bookmark this spot (B)" aria-label="Bookmark this spot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>Bookmark</span></button>
+      <button class="sb" id="btnTimer" title="Auto-pause timer" aria-label="Auto-pause timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="timerTxt">Timer</span></button>
+      <button class="sb" id="bNextCh" title="Next chapter" aria-label="Next chapter"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM4 6v12l10.5-6z"/></svg><span>Next ch.</span></button>
+    </div>
+    <div class="wpmblock">
+      <div class="wpmtop"><span>Speed</span><span id="wpmLabel">300 WPM</span></div>
+      <div class="wpmrow">
+        <button class="ib sm" id="wMinus" aria-label="Slower">&minus;</button>
+        <input type="range" id="wpm" min="150" max="1000" step="5" value="300" aria-label="Words per minute">
+        <button class="ib sm" id="wPlus" aria-label="Faster">+</button>
+      </div>
     </div>
   </footer>
 </div>
@@ -300,6 +340,15 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
         <button data-pref="chunk" data-val="3">3 words</button>
       </div>
 
+      <h3>Big skip size</h3>
+      <div class="seg">
+        <button data-pref="bigJump" data-val="25">25 words</button>
+        <button data-pref="bigJump" data-val="50">50 words</button>
+        <button data-pref="bigJump" data-val="100">100 words</button>
+        <button data-pref="bigJump" data-val="250">250 words</button>
+      </div>
+      <p class="muted">The outer skip buttons jump this far. On a keyboard, hold Shift with &larr; / &rarr;.</p>
+
       <h3>Assistance</h3>
       <label class="row"><span>Preview upcoming words</span><input type="checkbox" id="optContext"></label>
       <label class="row"><span>Warm-up (ramp speed over 30 s)</span><input type="checkbox" id="optWarm"></label>
@@ -307,7 +356,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
       <h3>Data</h3>
       <button class="btn block danger" id="btnClear">Delete all books, bookmarks &amp; progress</button>
       <p class="muted">Nothing is ever removed unless you press this button, or the &times; beside a book in the Library tab.</p>
-      <p class="muted">Keyboard: Space play/pause, &larr;/&rarr; &plusmn;10 words, &uarr;/&darr; speed, R restart.</p>
+      <p class="muted">Keyboard: Space play/pause, &larr;/&rarr; &plusmn;10 words (Shift for the big skip), &uarr;/&darr; speed in 5 WPM steps, R restart, B bookmark.</p>
     </section>
   </div>
 </aside>
@@ -337,7 +386,7 @@ function loadJSON(k, d){ try { const v = JSON.parse(localStorage.getItem(k)); re
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
 const prefs = Object.assign(
-  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, chunk:1, context:true, warmup:false, timer:'off' },
+  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, chunk:1, context:true, warmup:false, timer:'off', bigJump:50 },
   loadJSON('rsvp.prefs', {})
 );
 
@@ -383,11 +432,39 @@ const DB = {
 /* =====================================================================
    Text ingestion
    ===================================================================== */
+/* Run-on chapter names ("Author's Note. Hello dear readers, ...") are cut back to the real name. */
+const NOTE_RE = /^(author['\u2019`]?s?\s+note|a\s+note\s+(?:from|to)\s+(?:the\s+)?(?:author|readers?)|note\s+(?:from|to)\s+(?:the\s+)?(?:author|readers?)|about\s+the\s+author|acknowledge?ments?|dedication|epigraph|foreword|afterword)(?=\s|$|[.:,;!?\u2014\u2013-])/i;
+function cleanChapterTitle(s, max = 60){
+  s = String(s || '').replace(/\s+/g, ' ').trim();
+  const note = s.match(NOTE_RE);                                    // "Author's Note It has been a pleasure…" -> "Author's Note"
+  if (note && s.length > note[0].length + 12) return note[0];
+  if (s.length <= max) return s;
+  const m = s.slice(0, max + 1).match(/^(.{3,}?)(?:[.!?…:;](?=\s|$)|\s[—–|]\s)/);
+  if (m && !/^(chapter|part|book|ch|vol|volume|section|act)\.?\s*[\divxlc]+$/i.test(m[1].trim())) return m[1].trim();
+  let cut = s.slice(0, max - 1);
+  const sp = cut.lastIndexOf(' ');
+  if (sp > 20) cut = cut.slice(0, sp);
+  return cut.replace(/[\s,;:—–-]+$/, '') + '…';
+}
+/* A downloaded file name is often junk; tidy it, and spot metadata titles that are useless. */
+function cleanFileName(s){
+  return String(s || '').replace(/\.(epub|txt|md|markdown)$/i, '')
+    .replace(/[\[(][^\])]*(z-?lib|libgen|\.org|\.com|\.net|epub)[^\])]*[\])]/ig, ' ')
+    .replace(/_+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+const badTitle = t => { t = String(t || '').trim(); return !t || /^(unknown|untitled|title|document|book|no title)$/i.test(t) || /^[0-9a-f]{16,}$/i.test(t) || /^[\w-]{25,}$/.test(t); };
+function joinAuthors(list){
+  const seen = [];
+  for (const a of list) { const t = String(a || '').replace(/\s+/g, ' ').trim(); if (t && !seen.includes(t)) seen.push(t); }
+  return seen.slice(0, 3).join(', ') + (seen.length > 3 ? ' et al.' : '');
+}
+
 function Builder(){
   const words = [], para = [], chapters = [];
   return {
     words, para, chapters,
     chapter(title){
+      title = cleanChapterTitle(title);
       const last = chapters[chapters.length - 1];
       if (last && last.start === words.length) last.title = title;
       else chapters.push({ title, start: words.length });
@@ -567,7 +644,9 @@ async function loadEpubNative(buf, fallbackTitle){
   const opf = xml(await zip.text(opfPath));
 
   const tEl = opf.getElementsByTagNameNS('*', 'title')[0];
-  const title = (tEl && tEl.textContent.trim()) || fallbackTitle;
+  let title = tEl ? tEl.textContent.replace(/\s+/g, ' ').trim() : '';
+  if (badTitle(title)) title = cleanFileName(fallbackTitle) || 'Untitled';
+  const author = joinAuthors(Array.from(opf.getElementsByTagNameNS('*', 'creator')).map(e => e.textContent));
 
   const man = {};
   opf.querySelectorAll('manifest > item').forEach(it => {
@@ -651,7 +730,8 @@ async function loadEpubNative(buf, fallbackTitle){
     await new Promise(r => setTimeout(r, 0));
   }
   if (!b.words.length) throw new Error('No readable text found in this EPUB.');
-  return b.finish(title);
+  const doc = b.finish(title); doc.author = author || '';
+  return doc;
 }
 /* NATIVE-EPUB-END */
 
@@ -709,8 +789,12 @@ async function loadEpubLib(buf, fallbackTitle){
   await ensureEpub();
   const book = ePub(buf);
   await book.ready;
-  let title = fallbackTitle;
-  try { const m = await book.loaded.metadata; if (m && m.title) title = m.title; } catch {}
+  let title = cleanFileName(fallbackTitle) || 'Untitled', author = '';
+  try {
+    const m = await book.loaded.metadata;
+    if (m && !badTitle(m.title)) title = String(m.title).replace(/\s+/g, ' ').trim();
+    if (m && m.creator) author = joinAuthors([].concat(m.creator));
+  } catch {}
   let toc = [];
   try { const nav = await book.loaded.navigation; toc = flattenToc(nav.toc); } catch {}
   let items = book.spine.spineItems || [];
@@ -742,7 +826,8 @@ async function loadEpubLib(buf, fallbackTitle){
   }
   try { book.destroy(); } catch {}
   if (!b.words.length) throw new Error('No readable text found in this EPUB.');
-  return b.finish(title);
+  const doc = b.finish(title); doc.author = author || '';
+  return doc;
 }
 
 /* =====================================================================
@@ -929,7 +1014,7 @@ function updateUI(){
   const ci = chapterAt(S.cur);
   if (ci !== S.chapIdx) {
     S.chapIdx = ci;
-    el.chapTitle.textContent = S.chapters.length > 1 ? S.chapters[ci].title : '';
+    el.chapTitle.textContent = S.chapters.length > 1 ? cleanChapterTitle(S.chapters[ci].title) : '';
     $$('#chapList .chap').forEach((b, k) => b.classList.toggle('on', k === ci));
   }
   $('#bPrevCh').disabled = $('#bNextCh').disabled = S.chapters.length < 2;
@@ -948,6 +1033,15 @@ function savePos(force){
   S.lastSave = now;
   if (S.id) saveJSON('rsvp.pos.' + S.id, S.cur);
 }
+
+function updateJumpLabels(){
+  const n = Number(prefs.bigJump) > 0 ? Number(prefs.bigJump) : 50;
+  const bb = $('#bBackBig'), bf = $('#bFwdBig');
+  if (!bb || !bf) return;
+  bb.textContent = '−' + n; bf.textContent = '+' + n;
+  bb.title = bb.ariaLabel = 'Back ' + n + ' words'; bf.title = bf.ariaLabel = 'Forward ' + n + ' words';
+}
+const bigStep = () => (Number(prefs.bigJump) > 0 ? Number(prefs.bigJump) : 50);
 
 function setWpm(v){
   prefs.wpm = Math.max(150, Math.min(1000, Math.round(v / 5) * 5));
@@ -981,14 +1075,14 @@ const TIMER_STEPS = ['off', 'chapter', 5, 10, 15, 20, 30, 45, 60];
 function updateTimerBtn(){
   const b = $('#btnTimer'), tx = $('#timerTxt');
   let t = '';
-  if (prefs.timer === 'chapter') t = 'chapter';
+  if (prefs.timer === 'chapter') t = 'Ch. end';
   else if (typeof prefs.timer === 'number') {
     if (S.playing && S.timerEnd) {
       const left = Math.max(0, S.timerEnd - performance.now());
       t = Math.floor(left / 60000) + ':' + String(Math.floor(left % 60000 / 1000)).padStart(2, '0');
     } else t = prefs.timer + 'm';
   }
-  tx.textContent = t;
+  tx.textContent = t || 'Timer';
   b.classList.toggle('on', prefs.timer !== 'off');
 }
 
@@ -1008,7 +1102,7 @@ function addMark(){
   S.marks.push({
     pos: S.cur,
     text: S.words.slice(S.cur, S.cur + 8).join(' '),
-    chap: S.chapters.length > 1 ? S.chapters[ci].title : '',
+    chap: S.chapters.length > 1 ? cleanChapterTitle(S.chapters[ci].title) : '',
     t: Date.now()
   });
   S.marks.sort((a, b) => a.pos - b.pos);
@@ -1028,7 +1122,7 @@ function renderMarks(){
     const b = document.createElement('b'); b.textContent = m.text + '…';
     const s = document.createElement('small');
     const pct = n > 1 ? Math.round(m.pos / (n - 1) * 100) : 0;
-    s.textContent = [m.chap, pct + '%', 'word ' + (m.pos + 1).toLocaleString()].filter(Boolean).join(' · ');
+    s.textContent = [cleanChapterTitle(m.chap), pct + '%', 'word ' + (m.pos + 1).toLocaleString()].filter(Boolean).join(' · ');
     go.append(b, s);
     go.onclick = () => { seek(m.pos); closeDrawer(); };
     const del = document.createElement('button'); del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', 'Delete bookmark');
@@ -1054,7 +1148,7 @@ function renderChapters(){
   S.chapters.forEach((c, i) => {
     const b = document.createElement('button');
     b.className = 'chap';
-    const t = document.createElement('span'); t.textContent = c.title;
+    const t = document.createElement('span'); t.textContent = cleanChapterTitle(c.title);
     const next = i + 1 < S.chapters.length ? S.chapters[i + 1].start : S.words.length;
     const s = document.createElement('small'); s.textContent = (next - c.start).toLocaleString() + ' w';
     b.append(t, s);
@@ -1076,19 +1170,21 @@ const bookPos = id => { const v = Number(loadJSON(posKey(id), 0)); return Number
 
 /* Store a freshly parsed book. Re-adding the same title replaces its text but keeps your place and bookmarks. */
 async function registerDoc(doc, { byTitle = false } = {}){
-  let meta = lib.find(b => b.title === doc.title && (byTitle || b.words === doc.words.length));
+  let meta = lib.find(b => ((b.orig || b.title) === doc.title || b.title === doc.title) && (byTitle || b.words === doc.words.length));
   const id = meta ? meta.id : newId();
   doc.id = id;
   try {
-    await DB.put('book:' + id, { id, title: doc.title, words: doc.words, para: doc.para, chapters: doc.chapters });
+    await DB.put('book:' + id, { id, title: doc.title, author: doc.author || '', words: doc.words, para: doc.para, chapters: doc.chapters });
   } catch (e) {
     setStatus('This book is open, but your browser would not let me store it for later.', true);
     return { pos: 0, saved: false };
   }
   let pos = 0;
   if (!meta) {
-    lib.push({ id, title: doc.title, words: doc.words.length, added: Date.now(), opened: Date.now() });
+    lib.push({ id, title: doc.title, orig: doc.title, author: doc.author || '', words: doc.words.length, added: Date.now(), opened: Date.now() });
   } else {
+    if (!meta.author && doc.author) meta.author = doc.author;
+    if (!meta.orig) meta.orig = doc.title;
     pos = bookPos(id);
     if (meta.words !== doc.words.length && meta.words > 1) {          // text changed length: keep the same relative place
       const f = doc.words.length > 1 ? (doc.words.length - 1) / (meta.words - 1) : 0;
@@ -1108,15 +1204,16 @@ async function loadDoc(doc, { pos = 0, autoplay = false } = {}){
   S.words = doc.words;
   S.para = doc.para instanceof Uint8Array ? doc.para : Uint8Array.from(doc.para || []);
   S.chapters = doc.chapters;
-  S.title = doc.title;
   S.id = doc.id || newId();
+  const meta = lib.find(b => b.id === S.id);
+  S.title = meta ? meta.title : doc.title;        // your own rename wins over the file's name
+  S.author = meta ? (meta.author || '') : (doc.author || '');
   S.chapIdx = -1;
   el.docTitle.textContent = S.title;
   renderChapters();
   loadMarks();
   renderMarks();
   seek(Math.min(Math.max(0, pos), S.words.length - 1));
-  const meta = lib.find(b => b.id === S.id);
   if (meta) { meta.opened = Date.now(); saveLib(); }
   saveJSON('rsvp.current', S.id);
   savePos(true);
@@ -1167,6 +1264,34 @@ async function deleteEverything(){
   resetReader(); renderLibrary(); openDrawer('lib');
 }
 
+function editBook(m, row){
+  row.className = 'mark editing';
+  row.innerHTML = '';
+  const form = document.createElement('div'); form.className = 'editform';
+  const mk = (label, value, ph) => {
+    const l = document.createElement('label'); l.textContent = label;
+    const i = document.createElement('input'); i.type = 'text'; i.value = value; i.placeholder = ph;
+    i.setAttribute('autocomplete', 'off'); i.setAttribute('autocapitalize', 'words');
+    form.append(l, i); return i;
+  };
+  const ti = mk('Title', m.title, 'Title'), ai = mk('Author', m.author || '', 'Author (optional)');
+  const acts = document.createElement('div'); acts.className = 'acts';
+  const save = document.createElement('button'); save.className = 'btn primary'; save.textContent = 'Save';
+  const cancel = document.createElement('button'); cancel.className = 'btn'; cancel.textContent = 'Cancel';
+  const commit = () => {
+    const t = ti.value.replace(/\s+/g, ' ').trim();
+    if (t) m.title = t;
+    m.author = ai.value.replace(/\s+/g, ' ').trim();
+    saveLib();
+    if (m.id === S.id) { S.title = m.title; S.author = m.author; el.docTitle.textContent = S.title; }
+    renderLibrary();
+  };
+  save.onclick = commit; cancel.onclick = renderLibrary;
+  form.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } else if (e.key === 'Escape') { e.stopPropagation(); renderLibrary(); } });
+  acts.append(save, cancel); form.append(acts); row.append(form);
+  ti.focus(); ti.select();
+}
+
 function renderLibrary(){
   const box = $('#bookList');
   box.innerHTML = '';
@@ -1177,12 +1302,15 @@ function renderLibrary(){
     const t = document.createElement('b'); t.textContent = m.title;
     const pos = m.id === S.id ? S.cur : bookPos(m.id);
     const pct = m.words > 1 ? Math.min(100, Math.round(pos / (m.words - 1) * 100)) : 0;
-    const s = document.createElement('small'); s.textContent = m.words.toLocaleString() + ' words · ' + pct + '% read' + (m.id === S.id ? ' · open now' : '');
+    const s = document.createElement('small'); s.textContent = [m.author, m.words.toLocaleString() + ' words', pct + '% read', m.id === S.id ? 'open now' : ''].filter(Boolean).join(' · ');
     go.append(t, s);
     go.onclick = () => openBook(m.id);
+    const ed = document.createElement('button'); ed.className = 'edit'; ed.setAttribute('aria-label', 'Rename book'); ed.title = 'Rename';
+    ed.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+    ed.onclick = () => editBook(m, row);
     const del = document.createElement('button'); del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', 'Delete book');
     del.onclick = () => deleteBook(m.id);
-    row.append(go, del); box.appendChild(row);
+    row.append(go, ed, del); box.appendChild(row);
   });
 }
 
@@ -1217,7 +1345,7 @@ async function handleFile(file){
   if (!file) return;
   const name = file.name || 'Untitled';
   const ext = (name.split('.').pop() || '').toLowerCase();
-  const base = name.replace(/\.[^.]+$/, '');
+  const base = cleanFileName(name) || 'Untitled';
   setStatus(`Opening ${name}…`);
   try {
     let doc;
@@ -1260,15 +1388,27 @@ function showTab(t){
 /* =====================================================================
    Preferences
    ===================================================================== */
+/* The word is sized for the screen: on a narrow phone the setting is capped so words don't have to be squeezed. */
+const maxSize = () => {
+  let m = Math.round(innerWidth * 0.125);                       // keep words from needing to be squeezed sideways
+  const st = $('#stage'), sh = st ? st.clientHeight : 0;
+  if (sh > 0) m = Math.min(m, Math.floor(sh / 3));              // and keep the word box inside the reading area (phone landscape)
+  return Math.max(36, Math.min(140, m));
+};
+function applySize(){
+  const sl = $('#size'), e = Math.min(prefs.size, maxSize());
+  sl.max = maxSize(); sl.value = e;
+  root.style.setProperty('--size', e + 'px');
+  $('#sizePrev').textContent = e + ' px';
+}
 function applyPrefs(){
   root.dataset.theme = prefs.theme;
   root.style.setProperty('--accent', prefs.accent);
   root.style.setProperty('--font', FONTS[prefs.font] || FONTS.sans);
-  root.style.setProperty('--size', prefs.size + 'px');
+  applySize();
   $('#metaTheme').setAttribute('content', THEME_COLORS[prefs.theme] || '#000000');
   $$('[data-pref]').forEach(b => b.classList.toggle('on', String(prefs[b.dataset.pref]).toLowerCase() === b.dataset.val.toLowerCase()));
-  $('#size').value = prefs.size;
-  $('#sizePrev').textContent = prefs.size + ' px';
+  updateJumpLabels();
   $('#optContext').checked = prefs.context;
   $('#optWarm').checked = prefs.warmup;
   if (!/^#[0-9a-f]{6}$/i.test(prefs.accent)) prefs.accent = '#e63946';
@@ -1344,6 +1484,8 @@ function setupPWA(){
 $('#stage').addEventListener('click', toggle);
 el.play.addEventListener('click', toggle);
 $('#bBack').addEventListener('click', () => seek(S.cur - 10));
+$('#bBackBig').addEventListener('click', () => seek(S.cur - bigStep()));
+$('#bFwdBig').addEventListener('click', () => seek(S.cur + bigStep()));
 $('#bFwd').addEventListener('click', () => seek(S.cur + 10));
 $('#bRestart').addEventListener('click', () => seek(0));
 $('#bPrevCh').addEventListener('click', () => {
@@ -1357,8 +1499,16 @@ $('#bNextCh').addEventListener('click', () => {
 });
 el.scrub.addEventListener('input', () => seek(+el.scrub.value));
 el.wpm.addEventListener('input', () => setWpm(+el.wpm.value));
-$('#wMinus').addEventListener('click', () => setWpm(prefs.wpm - 25));
-$('#wPlus').addEventListener('click', () => setWpm(prefs.wpm + 25));
+/* Fine speed steps: 5 WPM per press, and holding the button keeps going. */
+function holdRepeat(btn, fn){
+  let t1 = null, t2 = null;
+  const stop = () => { clearTimeout(t1); clearInterval(t2); t1 = t2 = null; };
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); stop(); fn(); t1 = setTimeout(() => { t2 = setInterval(fn, 80); }, 450); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, stop));
+  btn.addEventListener('click', e => { if (e.detail === 0) fn(); });       // keyboard activation
+}
+holdRepeat($('#wMinus'), () => setWpm(prefs.wpm - 5));
+holdRepeat($('#wPlus'), () => setWpm(prefs.wpm + 5));
 
 $('#btnLib').addEventListener('click', () => openDrawer('lib'));
 $('#btnSet').addEventListener('click', () => openDrawer('set'));
@@ -1404,10 +1554,10 @@ addEventListener('keydown', e => {
   if (el.drawer.classList.contains('open')) return;
   switch (e.key) {
     case ' ': e.preventDefault(); toggle(); break;
-    case 'ArrowLeft': e.preventDefault(); seek(S.cur - 10); break;
-    case 'ArrowRight': e.preventDefault(); seek(S.cur + 10); break;
-    case 'ArrowUp': e.preventDefault(); setWpm(prefs.wpm + 25); break;
-    case 'ArrowDown': e.preventDefault(); setWpm(prefs.wpm - 25); break;
+    case 'ArrowLeft': e.preventDefault(); seek(S.cur - (e.shiftKey ? bigStep() : 10)); break;
+    case 'ArrowRight': e.preventDefault(); seek(S.cur + (e.shiftKey ? bigStep() : 10)); break;
+    case 'ArrowUp': e.preventDefault(); setWpm(prefs.wpm + 5); break;
+    case 'ArrowDown': e.preventDefault(); setWpm(prefs.wpm - 5); break;
     case 'r': case 'R': seek(0); break;
     case 'b': case 'B': addMark(); break;
   }
@@ -1427,7 +1577,7 @@ $('#btnTimer').addEventListener('click', () => {
 setInterval(updateTimerBtn, 1000);
 
 document.addEventListener('gesturestart', e => e.preventDefault());
-addEventListener('resize', fit);
+addEventListener('resize', () => { applySize(); fit(); });
 addEventListener('pagehide', () => { savePos(true); });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { if (S.playing) pause(); savePos(true); }
@@ -1438,6 +1588,7 @@ document.addEventListener('visibilitychange', () => {
    ===================================================================== */
 async function boot(){
   applyPrefs();
+  requestAnimationFrame(() => { applySize(); fit(); });      // re-measure once the layout exists
   el.play.innerHTML = ICON_PLAY;
   paint('Welcome', 2);
   setupPWA();
