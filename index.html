@@ -14,7 +14,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=Literata:wght@400;500;600;700&family=Merriweather:wght@400;700&family=EB+Garamond:wght@400;500;600;700&family=Lexend:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/opendyslexic">
 
 <style>
@@ -41,7 +41,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 
 /* ---------- top bar ---------- */
-.topbar{display:flex;align-items:center;gap:10px;padding:8px 12px}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px}
+#btnLib{order:1}.title{order:2}#btnSet{order:3}
+.tools{order:4;flex:1 0 100%;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tools .sb{height:50px}
 .tb{width:46px;height:46px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;flex:none}
 .tb svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tb:active{transform:scale(.94)}
@@ -83,7 +86,9 @@ body.playing.idle .ui{opacity:.12}
 .ib.sm{width:46px;height:46px;font-size:24px}
 .ib:active,.sb:active{transform:scale(.95)}
 .ib[disabled],.sb[disabled]{opacity:.35;pointer-events:none}
-.transport.sub{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px}
+.ib.sk{display:flex;flex-direction:column;gap:1px;padding:0}
+.ib.sk svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.ib.sk small{font-size:9.5px;font-weight:600;color:var(--dim);letter-spacing:.01em;line-height:1}
 .sb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:58px;min-width:0;border-radius:14px;background:var(--panel2);color:var(--fg)}
 .sb svg{width:22px;height:22px;flex:none}
 .sb span{font-size:11px;font-weight:600;color:var(--dim);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
@@ -139,7 +144,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .sw{width:46px;height:46px;border-radius:50%!important;flex:none!important;min-width:0!important;padding:0!important;border:3px solid transparent}
 .sw.on{border-color:var(--fg)!important}
 .themebtn{display:flex;align-items:center;justify-content:center;gap:8px}
-.themebtn i{width:18px;height:18px;border-radius:50%;border:1px solid var(--dim)}
+.themebtn i{width:18px;height:18px;border-radius:50%;border:1px solid var(--dim);flex:none}
 .row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;font-size:16px}
 .row input[type=checkbox]{-webkit-appearance:none;appearance:none;width:52px;height:30px;border-radius:15px;background:var(--line);position:relative;transition:background .2s;flex:none;cursor:pointer}
 .row input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
@@ -152,10 +157,13 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .colorpick .hex{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;text-transform:uppercase}
 .colorpick input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;cursor:pointer}
 .danger{color:#e5484d}
+.seg.fonts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg.t3 button{min-width:calc(33.333% - 6px)}
+.seg.fonts button{min-width:0;min-height:50px;font-size:16px;font-weight:500}
 .scrubwrap{position:relative}
 #markbar{position:absolute;left:14px;right:14px;top:9px;height:18px;pointer-events:none}
 #markbar i{position:absolute;top:0;width:4px;height:18px;margin-left:-2px;border-radius:2px;background:var(--accent);opacity:.9}
-#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 68px);transform:translate(-50%,-10px);background:var(--fg);color:var(--bg);
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 124px);transform:translate(-50%,-10px);background:var(--fg);color:var(--bg);
   padding:10px 18px;border-radius:22px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .mark{display:flex;align-items:center;background:var(--panel2);border-radius:10px;margin-bottom:6px}
@@ -175,13 +183,14 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .chap span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chap small{flex:none}
 @media (max-width:520px){ #drawer{width:100vw} .focus{width:96vw} }
-@media (max-width:360px){ .sb span{font-size:10px;letter-spacing:-.1px} .controls{padding-left:12px;padding-right:12px} }
+@media (max-width:360px){ .sb span{font-size:10px;letter-spacing:-.1px} .controls{padding-left:12px;padding-right:12px} .tab{font-size:13.5px} .ib.sk small{font-size:9px} }
 @media (min-width:700px){
   .controls{max-width:720px;padding:6px 24px 20px}
   .ib{width:60px;height:60px}
   .ib.txt{max-width:88px;height:62px;border-radius:31px;font-size:16px}
   .ib.play{width:88px;height:88px}
-  .sb{height:66px}.sb svg{width:25px;height:25px}.sb span{font-size:12.5px}
+  .tools{order:3;flex:0 0 auto;display:flex;gap:6px}.tools .sb{width:72px;height:54px}.sb svg{width:24px;height:24px}.sb span{font-size:11.5px}
+  #btnSet{order:4}
   .tb{width:50px;height:50px}
   .stats{font-size:15px}
 }
@@ -189,12 +198,12 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
   .topbar{padding:4px 12px}.tb{width:44px;height:44px}
   #hint,#context{display:none}
   .controls{max-width:none;display:flex;flex-wrap:wrap;align-items:center;column-gap:18px;padding:0 16px 8px}
-  .scrubwrap,.stats,.wpmblock{flex:1 1 100%}
+  .scrubwrap,.stats{flex:1 1 100%}
+  .wpmblock{flex:1 1 44%}
   .stats{margin:0 0 2px}
   .transport.main{flex:1 1 44%;margin:0;max-width:none}
-  .transport.sub{flex:1 1 44%;margin:0}
   .ib,.ib.txt{height:46px}.ib{width:46px}.ib.play{width:58px;height:58px}
-  .sb{height:46px}.sb span{display:none}
+  .tools .sb{width:54px;height:44px}.sb span{display:none}
   input[type=range]{height:28px}
 }
 </style>
@@ -205,6 +214,13 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
     <button class="tb" id="btnLib" title="Library" aria-label="Library and books"><svg viewBox="0 0 24 24"><path d="M5 4h4v16H5zM11 4h4v16h-4zM17.2 5.4l3.2.9-3.6 13.6-3.2-.9z"/></svg></button>
     <div class="title"><div id="docTitle">RSVP Speed Reader</div><div id="chapTitle"></div></div>
     <button class="tb" id="btnSet" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.4"/><circle cx="8" cy="17" r="2.4"/></svg></button>
+    <div class="tools">
+      <button class="sb" id="bRestart" title="Restart" aria-label="Restart"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg><span>Restart</span></button>
+      <button class="sb" id="bPrevCh" title="Previous chapter" aria-label="Previous chapter"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12L9.5 12z"/></svg><span>Prev. ch.</span></button>
+      <button class="sb" id="bNextCh" title="Next chapter" aria-label="Next chapter"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM4 6v12l10.5-6z"/></svg><span>Next ch.</span></button>
+      <button class="sb" id="btnMark" title="Bookmark this spot (B)" aria-label="Bookmark this spot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>Bookmark</span></button>
+      <button class="sb" id="btnTimer" title="Auto-pause timer" aria-label="Auto-pause timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="timerTxt">Timer</span></button>
+    </div>
   </header>
 
   <main id="stage" aria-label="Reading area. Tap to play or pause.">
@@ -224,18 +240,11 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
     <div class="scrubwrap"><div id="markbar"></div><input type="range" id="scrub" min="0" max="0" value="0" aria-label="Reading position"></div>
     <div class="stats" id="stats">No text loaded</div>
     <div class="transport main">
-      <button class="ib txt" id="bBackBig" title="Back 50 words" aria-label="Back 50 words">&minus;50</button>
+      <button class="ib txt sk" id="bPrevSent" title="Previous sentence" aria-label="Previous sentence"><svg viewBox="0 0 24 24"><path d="M12 6l-6 6 6 6M19 6l-6 6 6 6"/></svg><small>sentence</small></button>
       <button class="ib txt" id="bBack" title="Back 10 words" aria-label="Back 10 words">&minus;10</button>
       <button class="ib play" id="bPlay" title="Play / pause" aria-label="Play or pause"></button>
       <button class="ib txt" id="bFwd" title="Forward 10 words" aria-label="Forward 10 words">+10</button>
-      <button class="ib txt" id="bFwdBig" title="Forward 50 words" aria-label="Forward 50 words">+50</button>
-    </div>
-    <div class="transport sub">
-      <button class="sb" id="bRestart" title="Restart" aria-label="Restart"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg><span>Restart</span></button>
-      <button class="sb" id="bPrevCh" title="Previous chapter" aria-label="Previous chapter"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12L9.5 12z"/></svg><span>Prev. ch.</span></button>
-      <button class="sb" id="btnMark" title="Bookmark this spot (B)" aria-label="Bookmark this spot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>Bookmark</span></button>
-      <button class="sb" id="btnTimer" title="Auto-pause timer" aria-label="Auto-pause timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="timerTxt">Timer</span></button>
-      <button class="sb" id="bNextCh" title="Next chapter" aria-label="Next chapter"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM4 6v12l10.5-6z"/></svg><span>Next ch.</span></button>
+      <button class="ib txt sk" id="bNextSent" title="Next sentence" aria-label="Next sentence"><svg viewBox="0 0 24 24"><path d="M12 6l6 6-6 6M5 6l6 6-6 6"/></svg><small>sentence</small></button>
     </div>
     <div class="wpmblock">
       <div class="wpmtop"><span>Speed</span><span id="wpmLabel">300 WPM</span></div>
@@ -254,7 +263,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
   <div class="dhead">
     <div class="tabs">
       <button class="tab on" data-tab="lib">Library</button>
-      <button class="tab" data-tab="marks">Marks</button>
+      <button class="tab" data-tab="marks">Bookmarks</button>
       <button class="tab" data-tab="set">Settings</button>
     </div>
     <button class="close" id="btnClose" aria-label="Close">&times;</button>
@@ -272,7 +281,6 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
         <label class="btn block">Choose .epub, .txt or .md file
           <input type="file" id="file" accept=".epub,.txt,.md,.markdown,application/epub+zip,text/plain,text/markdown">
         </label>
-        <p class="muted">Files are read on this device only. Nothing is uploaded.</p>
       </div>
       <div id="status"></div>
 
@@ -280,7 +288,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
       <div id="bookList"></div>
 
       <h3>Chapters in this book</h3>
-      <div id="chapList"><p class="muted">Load a book to see its chapters.</p></div>
+      <div id="chapList"><p class="muted">No chapters.</p></div>
     </section>
 
     <!-- BOOKMARKS -->
@@ -293,18 +301,13 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
     <!-- SETTINGS -->
     <section class="pane" id="pane-set">
       <h3>Auto-pause</h3>
-      <div class="seg">
+      <div class="seg t3">
         <button data-pref="timer" data-val="off">Off</button>
         <button data-pref="timer" data-val="chapter">End of chapter</button>
-        <button data-pref="timer" data-val="5">5 min</button>
-        <button data-pref="timer" data-val="10">10 min</button>
         <button data-pref="timer" data-val="15">15 min</button>
-        <button data-pref="timer" data-val="20">20 min</button>
         <button data-pref="timer" data-val="30">30 min</button>
-        <button data-pref="timer" data-val="45">45 min</button>
         <button data-pref="timer" data-val="60">60 min</button>
       </div>
-      <p class="muted">Minutes count reading time from each press of Play. The clock button at the top cycles through these too.</p>
 
       <h3>Theme</h3>
       <div class="seg">
@@ -323,31 +326,11 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
       </label>
 
       <h3>Typeface</h3>
-      <div class="seg">
-        <button data-pref="font" data-val="sans">Sans</button>
-        <button data-pref="font" data-val="mono">Monospace</button>
-        <button data-pref="font" data-val="dyslexic">Dyslexia-friendly</button>
-      </div>
+      <div class="seg fonts" id="fontSeg"></div>
 
       <h3>Font size</h3>
       <input type="range" id="size" min="36" max="140" step="2">
       <div class="sizeprev" id="sizePrev">Reading</div>
-
-      <h3>Words per flash</h3>
-      <div class="seg">
-        <button data-pref="chunk" data-val="1">1 word</button>
-        <button data-pref="chunk" data-val="2">2 words</button>
-        <button data-pref="chunk" data-val="3">3 words</button>
-      </div>
-
-      <h3>Big skip size</h3>
-      <div class="seg">
-        <button data-pref="bigJump" data-val="25">25 words</button>
-        <button data-pref="bigJump" data-val="50">50 words</button>
-        <button data-pref="bigJump" data-val="100">100 words</button>
-        <button data-pref="bigJump" data-val="250">250 words</button>
-      </div>
-      <p class="muted">The outer skip buttons jump this far. On a keyboard, hold Shift with &larr; / &rarr;.</p>
 
       <h3>Assistance</h3>
       <label class="row"><span>Preview upcoming words</span><input type="checkbox" id="optContext"></label>
@@ -355,8 +338,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 
       <h3>Data</h3>
       <button class="btn block danger" id="btnClear">Delete all books, bookmarks &amp; progress</button>
-      <p class="muted">Nothing is ever removed unless you press this button, or the &times; beside a book in the Library tab.</p>
-      <p class="muted">Keyboard: Space play/pause, &larr;/&rarr; &plusmn;10 words (Shift for the big skip), &uarr;/&darr; speed in 5 WPM steps, R restart, B bookmark.</p>
+      <p class="muted">Keyboard: Space play/pause &middot; &larr;/&rarr; 10 words &middot; Shift+&larr;/&rarr; sentence &middot; &uarr;/&darr; speed &middot; R restart &middot; B bookmark</p>
     </section>
   </div>
 </aside>
@@ -374,25 +356,47 @@ const root = document.documentElement;
 
 const FONTS = {
   sans: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-  mono: 'ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace',
-  dyslexic: 'OpenDyslexic, "Atkinson Hyperlegible", "Comic Sans MS", system-ui, sans-serif'
+  georgia: 'Georgia, "Times New Roman", serif',
+  charter: 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif',
+  palatino: '"Palatino Linotype", Palatino, "Book Antiqua", "URW Palladio L", Georgia, serif',
+  garamond: '"EB Garamond", Garamond, "Hoefler Text", "Times New Roman", serif',
+  literata: 'Literata, Charter, Georgia, serif',
+  merriweather: 'Merriweather, Georgia, serif',
+  atkinson: '"Atkinson Hyperlegible", Verdana, system-ui, sans-serif',
+  lexend: 'Lexend, Verdana, system-ui, sans-serif',
+  dyslexic: 'OpenDyslexic, "Atkinson Hyperlegible", "Comic Sans MS", system-ui, sans-serif',
+  mono: 'ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace'
 };
+const FONT_LIST = [['sans', 'Sans'], ['georgia', 'Georgia'], ['charter', 'Charter'], ['palatino', 'Palatino'], ['garamond', 'Garamond'],
+  ['literata', 'Literata'], ['merriweather', 'Merriweather'], ['atkinson', 'Atkinson'], ['lexend', 'Lexend'],
+  ['dyslexic', 'OpenDyslexic'], ['mono', 'Monospace']];
+(function buildFontButtons(){
+  const box = $('#fontSeg');
+  FONT_LIST.forEach(([k, label]) => {
+    const b = document.createElement('button');
+    b.dataset.pref = 'font'; b.dataset.val = k; b.textContent = label; b.style.fontFamily = FONTS[k];
+    box.appendChild(b);
+  });
+})();
 const THEME_COLORS = { dark:'#000000', light:'#faf9f6', sepia:'#f4ecd8', solar:'#002b36' };
 
-const CLAUSE = 200, SENT = 350, PARA = 400;      // ms pauses
+const COMMA = 170, CLAUSE = 260, SENT = 350, PARA = 400;      // ms pauses: comma < ; : dash < sentence end < paragraph
 const WARMUP_MS = 30000;
 
 function loadJSON(k, d){ try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } }
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
 const prefs = Object.assign(
-  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, chunk:1, context:true, warmup:false, timer:'off', bigJump:50 },
+  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, context:true, warmup:false, timer:'off' },
   loadJSON('rsvp.prefs', {})
 );
+// older versions offered more timer lengths; map a saved one to the nearest option at or above it
+if (typeof prefs.timer === 'number') prefs.timer = [15, 30, 60].find(m => m >= prefs.timer) || 60;
+else if (prefs.timer !== 'chapter') prefs.timer = 'off';
 
 const S = {
   words: [], para: new Uint8Array(0), chapters: [], title: '', id: '',
-  cur: 0, next: 0, playing: false, timer: null, due: 0, warmElapsed: 0, lastSave: 0, chapIdx: -1, timerEnd: 0, marks: []
+  cur: 0, next: 0, playing: false, timer: null, due: 0, warmElapsed: 0, lastSave: 0, chapIdx: -1, timerLeft: null, timerStart: 0, marks: [], sent: [0]
 };
 
 const el = {
@@ -476,13 +480,14 @@ function Builder(){
         .replace(/\s*--+\s*/g, '\u2014')
         .replace(/(\S)(\u2014|\u2013|\u2015)(?=\S)/g, '$1$2 ')
         .replace(/([a-z]{2,}[.!?]["'\u201d\u2019]?)(?=[A-Z][a-z])/g, '$1 ')      // "end.Next" with a missing space
-        .replace(/([a-z]{2,}[\u2026])(?=[A-Za-z])/g, '$1 ');
+        .replace(/([a-z]{2,}[\u2026])(?=[A-Za-z])/g, '$1 ')
+        .replace(/(\p{L}{2,}[;:,])(?=\p{L})/gu, '$1 ');                          // "however,the" / "one;two" with no space
       const before = words.length;
       for (const tok of text.split(/\s+/)) {
         if (!tok) continue;
         if (!/[\p{L}\p{N}]/u.test(tok)) {
-          // pure punctuation: glue dashes/ellipses to the previous word, drop the rest
-          if (/^[\u2014\u2013]+$|^[.\u2026!?]+$/.test(tok) && words.length > before) words[words.length - 1] += tok;
+          // pure punctuation: glue dashes, ellipses, ; : , and closing quotes/brackets to the previous word, drop the rest (bullets etc.)
+          if (/^[\u2014\u2013.\u2026!?;:,"'\u201d\u2019\u00bb)\]}]+$/.test(tok) && words.length > before) words[words.length - 1] += tok;
           continue;
         }
         words.push(tok); para.push(0);
@@ -856,26 +861,18 @@ function pauseFor(tok, isPara){
     const body = t.slice(0, -1).replace(/^[^\p{L}]+/u, '');
     const abbr = t.endsWith('.') && (ABBR.test(body) || /^\p{Lu}$/u.test(body));
     if (!abbr) p = SENT;
-  } else if (/[,;:]$/.test(t) || /(\u2014|\u2013)$/.test(t)) {
+  } else if (/[;:]$/.test(t) || /(\u2014|\u2013)$/.test(t)) {
     p = CLAUSE;
+  } else if (/,$/.test(t)) {
+    p = COMMA;
   }
   if (isPara) p += PARA;
   return p;
 }
 
 function chunkAt(i){
-  const n = prefs.chunk, W = S.words;
-  const parts = [];
-  let j = i;
-  while (j < W.length && parts.length < n) {
-    parts.push(W[j]); j++;
-    if (S.para[j - 1] || pauseFor(W[j - 1], false) >= SENT) break;
-  }
-  if (parts.length === 1) return { text: parts[0], idx: orpOf(parts[0]), end: j };
-  const text = parts.join(' ');
-  let c = Math.floor(text.length / 2);
-  while (c > 0 && text[c] === ' ') c--;
-  return { text, idx: c, end: j };
+  const t = S.words[i];
+  return { text: t, idx: orpOf(t), end: i + 1 };
 }
 
 function paint(text, idx){
@@ -925,7 +922,8 @@ function tick(){
   S.timer = null;
   if (!S.playing) return;
   if (S.next >= S.words.length) { finish(); return; }
-  if (S.timerEnd && performance.now() >= S.timerEnd) { pause(); toast('Auto-paused: your timer ran out'); return; }
+  const left = timerRemaining();
+  if (left !== null && left <= 0) { pause(); S.timerLeft = null; updateTimerBtn(); toast('Auto-paused: time is up'); return; }
   if (prefs.timer === 'chapter' && chapterAt(S.next) !== chapterAt(S.cur)) {
     pause(); seek(S.next);                      // wait on the first word of the next chapter
     toast('Auto-paused at the end of the chapter');
@@ -968,7 +966,7 @@ function play(){
   if (S.next >= S.words.length) seek(0);
   S.playing = true;
   S.warmElapsed = 0;
-  S.timerEnd = typeof prefs.timer === 'number' ? performance.now() + prefs.timer * 60000 : 0;
+  S.timerStart = performance.now();
   document.body.classList.add('playing');
   el.play.innerHTML = ICON_PAUSE;
   lockScreen();
@@ -978,8 +976,8 @@ function play(){
 function pause(){
   clearTimeout(S.timer); S.timer = null;
   const was = S.playing;
+  if (was && typeof prefs.timer === 'number') S.timerLeft = timerRemaining();      // keep the time that is left
   S.playing = false;
-  S.timerEnd = 0;
   document.body.classList.remove('playing', 'idle');
   el.play.innerHTML = ICON_PLAY;
   unlockScreen();
@@ -1034,14 +1032,21 @@ function savePos(force){
   if (S.id) saveJSON('rsvp.pos.' + S.id, S.cur);
 }
 
-function updateJumpLabels(){
-  const n = Number(prefs.bigJump) > 0 ? Number(prefs.bigJump) : 50;
-  const bb = $('#bBackBig'), bf = $('#bFwdBig');
-  if (!bb || !bf) return;
-  bb.textContent = '−' + n; bf.textContent = '+' + n;
-  bb.title = bb.ariaLabel = 'Back ' + n + ' words'; bf.title = bf.ariaLabel = 'Forward ' + n + ' words';
+/* Sentence starts: the word after one that ends a sentence (or a paragraph). */
+function buildSentences(){
+  const W = S.words, st = [0];
+  for (let i = 0; i < W.length - 1; i++) if (S.para[i] || pauseFor(W[i], false) >= SENT) st.push(i + 1);
+  S.sent = st;
 }
-const bigStep = () => (Number(prefs.bigJump) > 0 ? Number(prefs.bigJump) : 50);
+function nextSentence(){
+  const k = S.sent.findIndex(s => s > S.cur);
+  if (k >= 0) seek(S.sent[k]);
+}
+function prevSentence(){
+  let j = 0;
+  for (let k = 0; k < S.sent.length; k++) { if (S.sent[k] <= S.cur) j = k; else break; }
+  seek(S.cur - S.sent[j] > 2 ? S.sent[j] : S.sent[Math.max(0, j - 1)]);     // like "previous track": restart this one first
+}
 
 function setWpm(v){
   prefs.wpm = Math.max(150, Math.min(1000, Math.round(v / 5) * 5));
@@ -1071,16 +1076,22 @@ function toast(msg){
   toastT = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-const TIMER_STEPS = ['off', 'chapter', 5, 10, 15, 20, 30, 45, 60];
+const TIMER_STEPS = ['off', 'chapter', 15, 30, 60];
+/* The minute timer is a pool of reading time: it only runs while playing, a pause keeps what's left,
+   and it refills when it runs out or when you change the setting. */
+function timerRemaining(){
+  if (typeof prefs.timer !== 'number') return null;
+  const base = S.timerLeft == null ? prefs.timer * 60000 : S.timerLeft;
+  return Math.max(0, base - (S.playing ? performance.now() - S.timerStart : 0));
+}
+function resetTimer(){ S.timerLeft = null; if (S.playing) S.timerStart = performance.now(); }
 function updateTimerBtn(){
   const b = $('#btnTimer'), tx = $('#timerTxt');
   let t = '';
   if (prefs.timer === 'chapter') t = 'Ch. end';
   else if (typeof prefs.timer === 'number') {
-    if (S.playing && S.timerEnd) {
-      const left = Math.max(0, S.timerEnd - performance.now());
-      t = Math.floor(left / 60000) + ':' + String(Math.floor(left % 60000 / 1000)).padStart(2, '0');
-    } else t = prefs.timer + 'm';
+    const left = timerRemaining();
+    t = Math.floor(left / 60000) + ':' + String(Math.floor(left % 60000 / 1000)).padStart(2, '0');
   }
   tx.textContent = t || 'Timer';
   b.classList.toggle('on', prefs.timer !== 'off');
@@ -1115,7 +1126,7 @@ function renderMarks(){
   const list = $('#markList'), bar = $('#markbar');
   list.innerHTML = ''; bar.innerHTML = '';
   const n = S.words.length;
-  if (!S.marks.length) { list.innerHTML = '<p class="muted">No bookmarks yet. Tap the bookmark button at the top while reading, or press B.</p>'; return; }
+  if (!S.marks.length) { list.innerHTML = '<p class="muted">No bookmarks yet.</p>'; return; }
   S.marks.forEach((m, i) => {
     const row = document.createElement('div'); row.className = 'mark';
     const go = document.createElement('button'); go.className = 'go';
@@ -1142,7 +1153,7 @@ function setStatus(msg, err){ el.status.textContent = msg || ''; el.status.class
 function renderChapters(){
   el.chapList.innerHTML = '';
   if (S.chapters.length < 2) {
-    el.chapList.innerHTML = '<p class="muted">No chapters detected in this text.</p>';
+    el.chapList.innerHTML = '<p class="muted">No chapters.</p>';
     return;
   }
   S.chapters.forEach((c, i) => {
@@ -1204,6 +1215,7 @@ async function loadDoc(doc, { pos = 0, autoplay = false } = {}){
   S.words = doc.words;
   S.para = doc.para instanceof Uint8Array ? doc.para : Uint8Array.from(doc.para || []);
   S.chapters = doc.chapters;
+  buildSentences();
   S.id = doc.id || newId();
   const meta = lib.find(b => b.id === S.id);
   S.title = meta ? meta.title : doc.title;        // your own rename wins over the file's name
@@ -1235,7 +1247,7 @@ async function openBook(id){
 
 function resetReader(){
   pause();
-  S.words = []; S.para = new Uint8Array(0); S.chapters = []; S.id = ''; S.cur = S.next = 0; S.chapIdx = -1; S.marks = [];
+  S.words = []; S.para = new Uint8Array(0); S.chapters = []; S.sent = [0]; S.id = ''; S.cur = S.next = 0; S.chapIdx = -1; S.marks = [];
   try { localStorage.removeItem('rsvp.current'); } catch {}
   el.docTitle.textContent = 'RSVP Speed Reader'; el.chapTitle.textContent = '';
   paint('Load a text', 2); el.ctx.textContent = '';
@@ -1295,7 +1307,7 @@ function editBook(m, row){
 function renderLibrary(){
   const box = $('#bookList');
   box.innerHTML = '';
-  if (!lib.length) { box.innerHTML = '<p class="muted">Books you load are kept here until you delete them.</p>'; return; }
+  if (!lib.length) { box.innerHTML = '<p class="muted">No books yet.</p>'; return; }
   [...lib].sort((a, b) => b.opened - a.opened).forEach(m => {
     const row = document.createElement('div'); row.className = 'mark book' + (m.id === S.id ? ' on' : '');
     const go = document.createElement('button'); go.className = 'go';
@@ -1401,14 +1413,20 @@ function applySize(){
   root.style.setProperty('--size', e + 'px');
   $('#sizePrev').textContent = e + ' px';
 }
+/* Web fonts arrive a moment after they're chosen; re-fit the word once they have. */
+function loadFont(){
+  const fam = (FONTS[prefs.font] || FONTS.sans).split(',')[0].replace(/["']/g, '').trim();
+  if (!document.fonts || !document.fonts.load) return;
+  Promise.all([document.fonts.load('500 40px "' + fam + '"'), document.fonts.load('700 40px "' + fam + '"')]).then(() => fit()).catch(() => {});
+}
 function applyPrefs(){
   root.dataset.theme = prefs.theme;
   root.style.setProperty('--accent', prefs.accent);
   root.style.setProperty('--font', FONTS[prefs.font] || FONTS.sans);
+  loadFont();
   applySize();
   $('#metaTheme').setAttribute('content', THEME_COLORS[prefs.theme] || '#000000');
   $$('[data-pref]').forEach(b => b.classList.toggle('on', String(prefs[b.dataset.pref]).toLowerCase() === b.dataset.val.toLowerCase()));
-  updateJumpLabels();
   $('#optContext').checked = prefs.context;
   $('#optWarm').checked = prefs.warmup;
   if (!/^#[0-9a-f]{6}$/i.test(prefs.accent)) prefs.accent = '#e63946';
@@ -1484,8 +1502,8 @@ function setupPWA(){
 $('#stage').addEventListener('click', toggle);
 el.play.addEventListener('click', toggle);
 $('#bBack').addEventListener('click', () => seek(S.cur - 10));
-$('#bBackBig').addEventListener('click', () => seek(S.cur - bigStep()));
-$('#bFwdBig').addEventListener('click', () => seek(S.cur + bigStep()));
+$('#bPrevSent').addEventListener('click', prevSentence);
+$('#bNextSent').addEventListener('click', nextSentence);
 $('#bFwd').addEventListener('click', () => seek(S.cur + 10));
 $('#bRestart').addEventListener('click', () => seek(0));
 $('#bPrevCh').addEventListener('click', () => {
@@ -1536,6 +1554,7 @@ addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files
 $$('[data-pref]').forEach(b => b.addEventListener('click', () => {
   const v = b.dataset.val;
   prefs[b.dataset.pref] = /^\d+$/.test(v) ? Number(v) : v;
+  if (b.dataset.pref === 'timer') resetTimer();
   commitPrefs();
 }));
 $('#accentCustom').addEventListener('input', e => { prefs.accent = e.target.value; commitPrefs(false); });
@@ -1554,8 +1573,8 @@ addEventListener('keydown', e => {
   if (el.drawer.classList.contains('open')) return;
   switch (e.key) {
     case ' ': e.preventDefault(); toggle(); break;
-    case 'ArrowLeft': e.preventDefault(); seek(S.cur - (e.shiftKey ? bigStep() : 10)); break;
-    case 'ArrowRight': e.preventDefault(); seek(S.cur + (e.shiftKey ? bigStep() : 10)); break;
+    case 'ArrowLeft': e.preventDefault(); e.shiftKey ? prevSentence() : seek(S.cur - 10); break;
+    case 'ArrowRight': e.preventDefault(); e.shiftKey ? nextSentence() : seek(S.cur + 10); break;
     case 'ArrowUp': e.preventDefault(); setWpm(prefs.wpm + 5); break;
     case 'ArrowDown': e.preventDefault(); setWpm(prefs.wpm - 5); break;
     case 'r': case 'R': seek(0); break;
@@ -1568,7 +1587,7 @@ $('#btnAddMark').addEventListener('click', addMark);
 $('#btnTimer').addEventListener('click', () => {
   const i = TIMER_STEPS.indexOf(prefs.timer);
   prefs.timer = TIMER_STEPS[(i + 1) % TIMER_STEPS.length];
-  if (S.playing) S.timerEnd = typeof prefs.timer === 'number' ? performance.now() + prefs.timer * 60000 : 0;
+  resetTimer();
   commitPrefs(false);
   toast(prefs.timer === 'off' ? 'Auto-pause off'
       : prefs.timer === 'chapter' ? 'Will pause at the end of the chapter'
