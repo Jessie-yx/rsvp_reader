@@ -130,6 +130,12 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;bac
 .pane{display:none}.pane.on{display:block}
 h3{margin:22px 0 10px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
 h3:first-child{margin-top:0}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 10px}
+.hrow h3{margin:0}
+#sortSel{min-height:36px;max-width:55%;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);padding:0 10px;font:600 14px system-ui,-apple-system,sans-serif}
+.fold{display:flex;align-items:center;justify-content:space-between;width:100%;margin:22px 0 10px;padding:0;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;text-align:left}
+.fold svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;flex:none}
+.fold[aria-expanded=true] svg{transform:rotate(180deg)}
 textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:12px;border:1px solid var(--line);
   background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,sans-serif}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:12px;
@@ -141,6 +147,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 #status{margin-top:12px;font-size:14px;min-height:1.3em;color:var(--dim)}
 #status.err{color:#e5484d}
 #drop.drag{outline:2px dashed var(--accent)}
+#chapList[hidden]{display:none}
 #chapList{display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow-y:auto;padding:2px}
 .chap{display:flex;justify-content:space-between;gap:10px;text-align:left;padding:11px 12px;border-radius:10px;background:var(--panel2);font-size:15px}
 .chap small{color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -301,11 +308,19 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
       </div>
       <div id="status"></div>
 
-      <h3>Your books</h3>
+      <div class="hrow"><h3>Your books</h3>
+        <select id="sortSel" aria-label="Sort books">
+          <option value="recent">Last read</option>
+          <option value="added">Newest added</option>
+          <option value="oldest">Oldest added</option>
+          <option value="az">Title A–Z</option>
+          <option value="za">Title Z–A</option>
+          <option value="progress">Most read</option>
+        </select></div>
       <div id="bookList"></div>
 
-      <h3>Chapters in this book</h3>
-      <div id="chapList"><p class="muted">No chapters.</p></div>
+      <button class="fold" id="chapToggle" aria-expanded="false"><span id="chapLabel">Chapters in this book</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div id="chapList" hidden><p class="muted">No chapters.</p></div>
     </section>
 
     <!-- BOOKMARKS -->
@@ -416,7 +431,7 @@ function loadJSON(k, d){ try { const v = JSON.parse(localStorage.getItem(k)); re
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
 const prefs = Object.assign(
-  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, warmup:false, timer:'off' },
+  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, warmup:false, timer:'off', sort:'recent', chapOpen:false },
   loadJSON('rsvp.prefs', {})
 );
 // older versions offered more timer lengths; map a saved one to the nearest option at or above it
@@ -1192,6 +1207,7 @@ function setStatus(msg, err){ el.status.textContent = msg || ''; el.status.class
 
 function renderChapters(){
   el.chapList.innerHTML = '';
+  $('#chapLabel').textContent = S.chapters.length > 1 ? `Chapters in this book (${S.chapters.length})` : 'Chapters in this book';
   if (S.chapters.length < 2) {
     el.chapList.innerHTML = '<p class="muted">No chapters.</p>';
     return;
@@ -1356,7 +1372,11 @@ function renderLibrary(){
   const box = $('#bookList');
   box.innerHTML = '';
   if (!lib.length) { box.innerHTML = '<p class="muted">No books yet.</p>'; return; }
-  [...lib].sort((a, b) => b.opened - a.opened).forEach(m => {
+  const prog = m => m.words > 1 ? (m.id === S.id ? S.cur : bookPos(m.id)) / (m.words - 1) : 0;
+  const byName = (a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true });
+  const SORTS = { recent: (a, b) => b.opened - a.opened, added: (a, b) => b.added - a.added, oldest: (a, b) => a.added - b.added,
+    az: byName, za: (a, b) => byName(b, a), progress: (a, b) => prog(b) - prog(a) };
+  [...lib].sort(SORTS[prefs.sort] || SORTS.recent).forEach(m => {
     const row = document.createElement('div'); row.className = 'mark book' + (m.id === S.id ? ' on' : '');
     const go = document.createElement('button'); go.className = 'go';
     const t = document.createElement('b'); t.textContent = m.title;
@@ -1537,7 +1557,8 @@ function openDrawer(tab){
   if (S.playing) pause();
   renderLibrary();
   if (tab) showTab(tab);
-  el.drawer.classList.add('open'); el.backdrop.classList.add('open');
+  el.drawer.classList.add('open');
+  applyFold(); el.backdrop.classList.add('open');
   el.drawer.setAttribute('aria-hidden', 'false');
 }
 function closeDrawer(){
@@ -1587,6 +1608,8 @@ function applyPrefs(){
   el.wpm.value = prefs.wpm;
   el.wpmLabel.textContent = `${prefs.wpm} WPM`;
   updateTimerBtn();
+  $('#sortSel').value = prefs.sort;
+  applyFold();
 }
 function commitPrefs(redraw = true){
   saveJSON('rsvp.prefs', prefs);
@@ -1714,6 +1737,14 @@ $('#accentCustom').addEventListener('input', e => { prefs.accent = e.target.valu
 $('#size').addEventListener('input', e => { prefs.size = +e.target.value; commitPrefs(); });
 $('#optWarm').addEventListener('change', e => { prefs.warmup = e.target.checked; commitPrefs(false); });
 
+function applyFold(){
+  const o = !!prefs.chapOpen;
+  $('#chapToggle').setAttribute('aria-expanded', o);
+  el.chapList.hidden = !o;
+  if (o) { const on = el.chapList.querySelector('.chap.on'); if (on) on.scrollIntoView({ block: 'center' }); }
+}
+$('#chapToggle').addEventListener('click', () => { prefs.chapOpen = !prefs.chapOpen; saveJSON('rsvp.prefs', prefs); applyFold(); });
+$('#sortSel').addEventListener('change', e => { prefs.sort = e.target.value; saveJSON('rsvp.prefs', prefs); renderLibrary(); });
 armed($('#btnClear'), 'Tap again to delete everything', deleteEverything);
 $('#btnBackup').addEventListener('click', backupLibrary);
 $('#restoreFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; restoreLibrary(f); });
