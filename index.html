@@ -65,9 +65,17 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .side.left{justify-content:flex-end}
 .side.right{justify-content:flex-start}
 .orp{color:var(--accent);font-weight:700;text-align:center}
-#context{width:min(94vw,1100px);margin-top:1.4em;text-align:center;color:var(--dim);opacity:.65;
-  font-family:var(--font);font-size:clamp(16px,calc(var(--size)*.3),30px);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.4em}
+.fwrap{position:relative;width:min(94vw,1100px)}
+.fwrap .focus{width:100%}
+#recent{position:absolute;left:0;right:0;bottom:100%;margin-bottom:.9em;display:flex;justify-content:center;color:var(--dim);opacity:.65;
+  font-family:var(--font);font-size:clamp(16px,calc(var(--size)*.3),30px);white-space:nowrap;overflow:hidden;min-height:1.4em;transition:opacity .25s}
+#recent span{flex:none}
+body.playing #recent{opacity:0}
+#q{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 14px;font:16px system-ui,-apple-system,sans-serif;-webkit-user-select:text;user-select:text;-webkit-appearance:none;appearance:none}
+#searchInfo{margin:10px 2px 8px;min-height:1.2em}
+.mark .go b.snip{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:500;line-height:1.35}
+.hl{color:var(--accent);font-weight:700}
+.btnrow{display:flex;gap:8px}.btnrow .btn{flex:1;position:relative}
 #hint{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:13px;color:var(--dim);pointer-events:none;transition:opacity .3s}
 body.playing #hint{opacity:0}
 
@@ -75,7 +83,8 @@ body.playing #hint{opacity:0}
 .controls{width:100%;max-width:640px;margin:0 auto;padding:2px 16px 12px}
 .ui{transition:opacity .6s}
 body.playing.idle .ui{opacity:.12}
-.stats{text-align:center;font-size:13.5px;line-height:1.35;color:var(--dim);font-variant-numeric:tabular-nums;margin:0 0 8px}
+.progress{width:100%;max-width:640px;margin:0 auto;padding:2px 16px 0}
+.stats{text-align:center;font-size:13.5px;line-height:1.35;color:var(--dim);font-variant-numeric:tabular-nums;margin:0 0 2px}
 .transport{display:flex;align-items:center;gap:8px}
 .transport.main{justify-content:center;margin:0 auto 10px;max-width:460px}
 .ib{border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-weight:700;font-size:15px;flex:none;width:52px;height:52px}
@@ -112,9 +121,9 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;bac
   transform:translateX(102%);transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) 0;box-shadow:-8px 0 30px rgba(0,0,0,.35)}
 #drawer.open{transform:none}
-.dhead{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.dhead{display:flex;align-items:center;gap:4px;padding:12px 10px 12px 12px;border-bottom:1px solid var(--line)}
 .tabs{flex:1;display:flex;gap:6px}
-.tab{flex:1;min-height:42px;border-radius:10px;font-weight:600;font-size:15px;color:var(--dim)}
+.tab{flex:1;min-width:0;padding:0 2px;min-height:42px;border-radius:10px;font-weight:600;font-size:15px;color:var(--dim)}
 .tab.on{background:var(--panel2);color:var(--fg)}
 .close{width:42px;height:42px;font-size:26px;line-height:1;color:var(--dim)}
 .dbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px 28px;-webkit-user-select:text;user-select:text}
@@ -163,7 +172,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .scrubwrap{position:relative}
 #markbar{position:absolute;left:14px;right:14px;top:9px;height:18px;pointer-events:none}
 #markbar i{position:absolute;top:0;width:4px;height:18px;margin-left:-2px;border-radius:2px;background:var(--accent);opacity:.9}
-#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 124px);transform:translate(-50%,-10px);background:var(--fg);color:var(--bg);
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 178px);transform:translate(-50%,-10px);background:var(--fg);color:var(--bg);
   padding:10px 18px;border-radius:22px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .mark{display:flex;align-items:center;background:var(--panel2);border-radius:10px;margin-bottom:6px}
@@ -172,6 +181,8 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .mark .go small{display:block;color:var(--dim);font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .book.on{outline:2px solid var(--accent)}
 #bookList{margin-bottom:4px}
+.mark .del.armed{width:auto;height:38px;margin-right:6px;padding:0 12px;font-size:14px;font-weight:600;color:var(--accent);background:transparent;border:2px solid var(--accent);border-radius:10px}
+.btn.danger.armed{color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
 .mark .del{width:46px;height:46px;font-size:22px;color:var(--dim);flex:none}
 .mark .edit{width:42px;height:46px;flex:none;display:grid;place-items:center;color:var(--dim)}
 .mark .edit svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -183,7 +194,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .chap span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chap small{flex:none}
 @media (max-width:520px){ #drawer{width:100vw} .focus{width:96vw} }
-@media (max-width:360px){ .sb span{font-size:10px;letter-spacing:-.1px} .controls{padding-left:12px;padding-right:12px} .tab{font-size:13.5px} .ib.sk small{font-size:9px} }
+@media (max-width:360px){ .sb span{font-size:10px;letter-spacing:-.1px} .controls{padding-left:12px;padding-right:12px} .tab{font-size:11.5px} .ib.sk small{font-size:9px} }
 @media (min-width:700px){
   .controls{max-width:720px;padding:6px 24px 20px}
   .ib{width:60px;height:60px}
@@ -193,14 +204,16 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
   #btnSet{order:4}
   .tb{width:50px;height:50px}
   .stats{font-size:15px}
+  .progress{max-width:720px;padding:4px 24px 0}
 }
 @media (max-height:520px) and (orientation:landscape){
   .topbar{padding:4px 12px}.tb{width:44px;height:44px}
-  #hint,#context{display:none}
+  #hint,#recent{display:none}
   .controls{max-width:none;display:flex;flex-wrap:wrap;align-items:center;column-gap:18px;padding:0 16px 8px}
-  .scrubwrap,.stats{flex:1 1 100%}
   .wpmblock{flex:1 1 44%}
-  .stats{margin:0 0 2px}
+  .progress{max-width:none;display:flex;align-items:center;gap:14px;padding:0 16px}
+  .progress .stats{margin:0;white-space:nowrap;font-size:12px;flex:none}
+  .scrubwrap{flex:1}
   .transport.main{flex:1 1 44%;margin:0;max-width:none}
   .ib,.ib.txt{height:46px}.ib{width:46px}.ib.play{width:58px;height:58px}
   .tools .sb{width:54px;height:44px}.sb span{display:none}
@@ -223,7 +236,13 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
     </div>
   </header>
 
+  <section class="progress ui">
+    <div class="stats" id="stats">No text loaded</div>
+    <div class="scrubwrap"><div id="markbar"></div><input type="range" id="scrub" min="0" max="0" value="0" aria-label="Reading position"></div>
+  </section>
+
   <main id="stage" aria-label="Reading area. Tap to play or pause.">
+    <div class="fwrap"><div id="recent"></div>
     <div class="focus">
       <i class="tick top"></i><i class="tick bot"></i>
       <div class="word" id="word" aria-live="off">
@@ -231,14 +250,11 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
         <div class="orp" id="wo"></div>
         <div class="side right"><span id="wr"></span></div>
       </div>
-    </div>
-    <div id="context"></div>
+    </div></div>
     <div id="hint">Tap anywhere to play / pause</div>
   </main>
 
   <footer class="controls ui">
-    <div class="scrubwrap"><div id="markbar"></div><input type="range" id="scrub" min="0" max="0" value="0" aria-label="Reading position"></div>
-    <div class="stats" id="stats">No text loaded</div>
     <div class="transport main">
       <button class="ib txt sk" id="bPrevSent" title="Previous sentence" aria-label="Previous sentence"><svg viewBox="0 0 24 24"><path d="M12 6l-6 6 6 6M19 6l-6 6 6 6"/></svg><small>sentence</small></button>
       <button class="ib txt" id="bBack" title="Back 10 words" aria-label="Back 10 words">&minus;10</button>
@@ -264,6 +280,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
     <div class="tabs">
       <button class="tab on" data-tab="lib">Library</button>
       <button class="tab" data-tab="marks">Bookmarks</button>
+      <button class="tab" data-tab="search">Search</button>
       <button class="tab" data-tab="set">Settings</button>
     </div>
     <button class="close" id="btnClose" aria-label="Close">&times;</button>
@@ -296,6 +313,13 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
       <button class="btn primary block" id="btnAddMark">Bookmark current position</button>
       <h3>Bookmarks in this book</h3>
       <div id="markList"><p class="muted">No bookmarks yet.</p></div>
+    </section>
+
+    <!-- SEARCH -->
+    <section class="pane" id="pane-search">
+      <input type="search" id="q" placeholder="Search this book" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search this book">
+      <div id="searchInfo" class="muted"></div>
+      <div id="searchList"></div>
     </section>
 
     <!-- SETTINGS -->
@@ -333,10 +357,15 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
       <div class="sizeprev" id="sizePrev">Reading</div>
 
       <h3>Assistance</h3>
-      <label class="row"><span>Preview upcoming words</span><input type="checkbox" id="optContext"></label>
       <label class="row"><span>Warm-up (ramp speed over 30 s)</span><input type="checkbox" id="optWarm"></label>
 
       <h3>Data</h3>
+      <div class="btnrow">
+        <button class="btn" id="btnBackup">Back up library</button>
+        <label class="btn">Restore backup<input type="file" id="restoreFile" accept=".json,application/json"></label>
+      </div>
+      <p class="muted" id="dataMsg"></p>
+      <div class="gap"></div>
       <button class="btn block danger" id="btnClear">Delete all books, bookmarks &amp; progress</button>
       <p class="muted">Keyboard: Space play/pause &middot; &larr;/&rarr; 10 words &middot; Shift+&larr;/&rarr; sentence &middot; &uarr;/&darr; speed &middot; R restart &middot; B bookmark</p>
     </section>
@@ -387,7 +416,7 @@ function loadJSON(k, d){ try { const v = JSON.parse(localStorage.getItem(k)); re
 function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
 const prefs = Object.assign(
-  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, context:true, warmup:false, timer:'off' },
+  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, warmup:false, timer:'off' },
   loadJSON('rsvp.prefs', {})
 );
 // older versions offered more timer lengths; map a saved one to the nearest option at or above it
@@ -396,11 +425,11 @@ else if (prefs.timer !== 'chapter') prefs.timer = 'off';
 
 const S = {
   words: [], para: new Uint8Array(0), chapters: [], title: '', id: '',
-  cur: 0, next: 0, playing: false, timer: null, due: 0, warmElapsed: 0, lastSave: 0, chapIdx: -1, timerLeft: null, timerStart: 0, marks: [], sent: [0]
+  cur: 0, next: 0, playing: false, timer: null, due: 0, warmElapsed: 0, lastSave: 0, chapIdx: -1, timerLeft: null, timerStart: 0, marks: [], sent: [0], norm: null, resumeBack: false
 };
 
 const el = {
-  wl:$('#wl'), wo:$('#wo'), wr:$('#wr'), word:$('#word'), ctx:$('#context'),
+  wl:$('#wl'), wo:$('#wo'), wr:$('#wr'), word:$('#word'),
   scrub:$('#scrub'), stats:$('#stats'), play:$('#bPlay'), wpm:$('#wpm'), wpmLabel:$('#wpmLabel'),
   docTitle:$('#docTitle'), chapTitle:$('#chapTitle'), status:$('#status'), chapList:$('#chapList'),
   drawer:$('#drawer'), backdrop:$('#backdrop')
@@ -887,14 +916,18 @@ function fit(){
   const s = Math.min(1, l / (el.wl.offsetWidth || 1), r / (el.wr.offsetWidth || 1));
   if (s < 0.999) el.word.style.transform = `scale(${s.toFixed(3)})`;
 }
-function paintContext(from){
-  if (!prefs.context || from >= S.words.length) { el.ctx.textContent = ''; return; }
-  el.ctx.textContent = S.words.slice(from, from + 4).join(' ');
+function paintRecent(i){
+  const r = $('#recent');
+  r.textContent = '';
+  if (i <= 0) return;
+  const sp = document.createElement('span');
+  sp.textContent = S.words.slice(Math.max(0, i - 3), i).join(' ');
+  r.appendChild(sp);
 }
 function display(i){
   const c = chunkAt(i);
   paint(c.text, c.idx);
-  paintContext(c.end);
+  paintRecent(i);
   return c.end;
 }
 
@@ -906,6 +939,10 @@ function effWpm(){
 }
 function delayFor(i, end){
   let d = 60000 / effWpm() * (end - i);
+  for (let k = i; k < end; k++) {                                   // long words get a little longer on screen
+    const n = (S.words[k].match(/[\p{L}\p{N}]/gu) || []).length;
+    if (n > 8) d += 60000 / effWpm() * Math.min(0.5, (n - 8) * 0.1);
+  }
   d += pauseFor(S.words[end - 1], S.para[end - 1]);
   for (let k = i; k < end - 1; k++) d += pauseFor(S.words[k], false) * 0.5;
   return d;
@@ -948,6 +985,7 @@ function seek(i){
   if (!S.words.length) return;
   i = Math.max(0, Math.min(S.words.length - 1, Math.round(i)));
   clearTimeout(S.timer); S.timer = null;
+  S.resumeBack = false;
   S.cur = i;
   S.next = display(i);
   updateUI();
@@ -964,6 +1002,7 @@ function play(){
   if (!S.words.length) { openDrawer('lib'); return; }
   if (S.playing) return;
   if (S.next >= S.words.length) seek(0);
+  else if (S.resumeBack && S.cur > 0) seek(S.cur - 3);        // pick up a few words earlier
   S.playing = true;
   S.warmElapsed = 0;
   S.timerStart = performance.now();
@@ -978,6 +1017,7 @@ function pause(){
   const was = S.playing;
   if (was && typeof prefs.timer === 'number') S.timerLeft = timerRemaining();      // keep the time that is left
   S.playing = false;
+  if (was) S.resumeBack = true;
   document.body.classList.remove('playing', 'idle');
   el.play.innerHTML = ICON_PLAY;
   unlockScreen();
@@ -1220,11 +1260,12 @@ async function loadDoc(doc, { pos = 0, autoplay = false } = {}){
   const meta = lib.find(b => b.id === S.id);
   S.title = meta ? meta.title : doc.title;        // your own rename wins over the file's name
   S.author = meta ? (meta.author || '') : (doc.author || '');
-  S.chapIdx = -1;
+  S.chapIdx = -1; S.norm = null;
   el.docTitle.textContent = S.title;
   renderChapters();
   loadMarks();
   renderMarks();
+  renderSearch();
   seek(Math.min(Math.max(0, pos), S.words.length - 1));
   if (meta) { meta.opened = Date.now(); saveLib(); }
   saveJSON('rsvp.current', S.id);
@@ -1247,17 +1288,25 @@ async function openBook(id){
 
 function resetReader(){
   pause();
-  S.words = []; S.para = new Uint8Array(0); S.chapters = []; S.sent = [0]; S.id = ''; S.cur = S.next = 0; S.chapIdx = -1; S.marks = [];
+  S.words = []; S.para = new Uint8Array(0); S.chapters = []; S.sent = [0]; S.id = ''; S.cur = S.next = 0; S.chapIdx = -1; S.marks = []; S.norm = null;
   try { localStorage.removeItem('rsvp.current'); } catch {}
   el.docTitle.textContent = 'RSVP Speed Reader'; el.chapTitle.textContent = '';
-  paint('Load a text', 2); el.ctx.textContent = '';
-  renderChapters(); renderMarks(); updateUI();
+  paint('Load a text', 2); $('#recent').textContent = '';
+  renderChapters(); renderMarks(); renderSearch(); updateUI();
 }
 
+/* Two-tap confirmation (browsers and previews often block confirm() dialogs). */
+function armed(btn, armedLabel, fn){
+  const orig = btn.textContent;
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('armed')) { clearTimeout(btn._t); btn.classList.remove('armed'); btn.textContent = orig; fn(); return; }
+    btn.classList.add('armed'); btn.textContent = armedLabel;
+    btn._t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = orig; }, 3500);
+  });
+}
 async function deleteBook(id){
   const m = lib.find(b => b.id === id);
   if (!m) return;
-  if (!confirm('Delete “' + m.title + '”, with its bookmarks and progress, from this device?')) return;
   try { await DB.del('book:' + id); } catch {}
   lib = lib.filter(b => b.id !== id); saveLib();
   try { localStorage.removeItem(posKey(id)); localStorage.removeItem('rsvp.marks.' + id); } catch {}
@@ -1265,7 +1314,6 @@ async function deleteBook(id){
   renderLibrary();
 }
 async function deleteEverything(){
-  if (!confirm('Delete ALL books, bookmarks and reading progress from this device?')) return;
   pause();
   for (const m of lib) {
     try { await DB.del('book:' + m.id); } catch {}
@@ -1321,7 +1369,7 @@ function renderLibrary(){
     ed.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
     ed.onclick = () => editBook(m, row);
     const del = document.createElement('button'); del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', 'Delete book');
-    del.onclick = () => deleteBook(m.id);
+    armed(del, 'Delete?', () => deleteBook(m.id));
     row.append(go, ed, del); box.appendChild(row);
   });
 }
@@ -1379,6 +1427,110 @@ async function handleFile(file){
 }
 
 /* =====================================================================
+   Search (lives in the drawer, so the reading screen stays clear)
+   ===================================================================== */
+const normTok = w => w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+function searchBook(q){
+  const Q = q.toLowerCase().split(/\s+/).map(normTok).filter(Boolean);
+  if (!Q.length || (Q.length === 1 && Q[0].length < 2)) return null;
+  if (!S.norm) S.norm = S.words.map(normTok);
+  const N = S.norm, k = Q.length, last = Q[k - 1], exact = /\s$/.test(q);   // a trailing space means "whole word"
+  const hits = []; let total = 0;
+  for (let i = 0; i + k <= N.length; i++) {
+    let ok = true;
+    for (let j = 0; j < k - 1; j++) if (N[i + j] !== Q[j]) { ok = false; break; }
+    if (!ok) continue;
+    const w = N[i + k - 1];
+    if (exact ? w !== last : !w.startsWith(last)) continue;
+    total++; if (hits.length < 80) hits.push(i);
+  }
+  return { hits, total, k };
+}
+function renderSearch(){
+  const box = $('#searchList'), info = $('#searchInfo');
+  box.innerHTML = ''; info.textContent = '';
+  if (!S.words.length) return;
+  const r = searchBook($('#q').value);
+  if (!r) return;
+  info.textContent = !r.total ? 'No matches' : r.total === 1 ? '1 match'
+    : r.total > r.hits.length ? `${r.total.toLocaleString()} matches · showing the first ${r.hits.length}` : `${r.total} matches`;
+  const n = S.words.length, W = S.words;
+  r.hits.forEach(pos => {
+    const row = document.createElement('div'); row.className = 'mark';
+    const go = document.createElement('button'); go.className = 'go';
+    const b = document.createElement('b'); b.className = 'snip';
+    const hl = document.createElement('span'); hl.className = 'hl'; hl.textContent = W.slice(pos, pos + r.k).join(' ');
+    b.append((pos > 5 ? '… ' : '') + W.slice(Math.max(0, pos - 5), pos).join(' ') + ' ', hl, ' ' + W.slice(pos + r.k, pos + r.k + 10).join(' '));
+    const sm = document.createElement('small');
+    const ci = chapterAt(pos), pct = n > 1 ? Math.round(pos / (n - 1) * 100) : 0;
+    sm.textContent = [S.chapters.length > 1 ? cleanChapterTitle(S.chapters[ci].title) : '', pct + '%'].filter(Boolean).join(' · ');
+    go.append(b, sm);
+    go.onclick = () => { seek(pos); closeDrawer(); };
+    row.appendChild(go); box.appendChild(row);
+  });
+}
+
+/* =====================================================================
+   Backup / restore: one file holding every book, bookmark and place
+   ===================================================================== */
+const dataMsg = t => { $('#dataMsg').textContent = t || ''; };
+async function backupLibrary(){
+  if (!lib.length) { dataMsg('Nothing to back up yet.'); return; }
+  dataMsg('Preparing…');
+  try {
+    if (S.id) savePos(true);
+    const books = [];
+    for (const m of lib) {
+      const d = await DB.get('book:' + m.id);
+      if (!d || !d.words) continue;
+      const paraIdx = [];
+      if (d.para) for (let i = 0; i < d.words.length; i++) if (d.para[i]) paraIdx.push(i);
+      books.push({ meta: m, title: d.title, author: d.author || '', pos: bookPos(m.id), marks: loadJSON('rsvp.marks.' + m.id, []), words: d.words, paraIdx, chapters: d.chapters });
+    }
+    const data = { app: 'rsvp-reader', v: 1, saved: Date.now(), prefs, current: S.id, books };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const name = 'rsvp-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    const file = new File([blob], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: name }); dataMsg(''); return; }
+      catch (e) { if (e && e.name === 'AbortError') { dataMsg(''); return; } }
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    dataMsg(`Saved ${books.length} ${books.length === 1 ? 'book' : 'books'}.`);
+  } catch (e) { dataMsg('Could not create the backup.'); }
+}
+async function restoreLibrary(file){
+  if (!file) return;
+  try {
+    const data = JSON.parse(await readFile(file, 'text'));
+    if (!data || data.app !== 'rsvp-reader' || !Array.isArray(data.books)) throw new Error('That is not a backup from this app.');
+    const wasEmpty = !lib.length;
+    let added = 0, firstId = '';
+    for (const b of data.books) {
+      if (!b || !b.meta || !b.meta.id || !Array.isArray(b.words) || !b.words.length) continue;
+      const id = b.meta.id;
+      if (lib.some(x => x.id === id || (x.title === b.meta.title && x.words === b.meta.words))) continue;
+      const para = new Uint8Array(b.words.length);
+      (b.paraIdx || []).forEach(i => { if (i >= 0 && i < para.length) para[i] = 1; });
+      const chapters = Array.isArray(b.chapters) && b.chapters.length ? b.chapters : [{ title: b.title || 'Start', start: 0 }];
+      await DB.put('book:' + id, { id, title: b.title || b.meta.title, author: b.author || '', words: b.words, para, chapters });
+      lib.push(Object.assign({}, b.meta, { words: b.words.length }));
+      saveJSON(posKey(id), Number(b.pos) || 0);
+      saveJSON('rsvp.marks.' + id, Array.isArray(b.marks) ? b.marks : []);
+      if (!firstId || id === data.current) firstId = id;
+      added++;
+    }
+    saveLib();
+    if (wasEmpty && data.prefs && typeof data.prefs === 'object') { Object.assign(prefs, data.prefs); commitPrefs(); }
+    renderLibrary();
+    dataMsg(added ? `Restored ${added} ${added === 1 ? 'book' : 'books'}.` : 'Everything in that backup is already here.');
+    if (added && !S.id) await openBook(firstId);
+  } catch (e) { dataMsg(e.message || 'Could not read that file.'); }
+}
+
+/* =====================================================================
    Drawer
    ===================================================================== */
 function openDrawer(tab){
@@ -1395,6 +1547,7 @@ function closeDrawer(){
 function showTab(t){
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   $$('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + t));
+  if (t === 'search') { renderSearch(); setTimeout(() => { try { $('#q').focus(); } catch {} }, 60); }
 }
 
 /* =====================================================================
@@ -1427,7 +1580,6 @@ function applyPrefs(){
   applySize();
   $('#metaTheme').setAttribute('content', THEME_COLORS[prefs.theme] || '#000000');
   $$('[data-pref]').forEach(b => b.classList.toggle('on', String(prefs[b.dataset.pref]).toLowerCase() === b.dataset.val.toLowerCase()));
-  $('#optContext').checked = prefs.context;
   $('#optWarm').checked = prefs.warmup;
   if (!/^#[0-9a-f]{6}$/i.test(prefs.accent)) prefs.accent = '#e63946';
   $('#accentCustom').value = prefs.accent;
@@ -1543,6 +1695,7 @@ $('#btnLoad').addEventListener('click', async () => {
     setStatus('');
     const r = await registerDoc(doc);
     await loadDoc(doc, { pos: r.pos, autoplay: true });
+    $('#paste').value = '';                 // ready for the next paste
   } catch (e) { setStatus(e.message, true); }
 });
 
@@ -1559,16 +1712,20 @@ $$('[data-pref]').forEach(b => b.addEventListener('click', () => {
 }));
 $('#accentCustom').addEventListener('input', e => { prefs.accent = e.target.value; commitPrefs(false); });
 $('#size').addEventListener('input', e => { prefs.size = +e.target.value; commitPrefs(); });
-$('#optContext').addEventListener('change', e => { prefs.context = e.target.checked; commitPrefs(); });
 $('#optWarm').addEventListener('change', e => { prefs.warmup = e.target.checked; commitPrefs(false); });
 
-$('#btnClear').addEventListener('click', deleteEverything);
+armed($('#btnClear'), 'Tap again to delete everything', deleteEverything);
+$('#btnBackup').addEventListener('click', backupLibrary);
+$('#restoreFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; restoreLibrary(f); });
+let searchT = null;
+$('#q').addEventListener('input', () => { clearTimeout(searchT); searchT = setTimeout(renderSearch, 150); });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
 
 document.addEventListener('click', e => { const b = e.target.closest('button'); if (b) b.blur(); });
 
 addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
-  if (tag === 'textarea' || (tag === 'input' && e.target.type === 'text')) return;
+  if (tag === 'textarea' || (tag === 'input' && (e.target.type === 'text' || e.target.type === 'search'))) return;
   if (e.key === 'Escape') { closeDrawer(); return; }
   if (el.drawer.classList.contains('open')) return;
   switch (e.key) {
