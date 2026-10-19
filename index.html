@@ -95,15 +95,13 @@ body.playing.idle .ui{opacity:.12}
 .ib.sm{width:46px;height:46px;font-size:24px}
 .ib:active,.sb:active{transform:scale(.95)}
 .ib[disabled],.sb[disabled]{opacity:.35;pointer-events:none}
-.ib.sk{display:flex;flex-direction:column;gap:1px;padding:0}
-.ib.sk svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.ib.sk small{font-size:9.5px;font-weight:600;color:var(--dim);letter-spacing:.01em;line-height:1}
+.ib.sk{display:flex;align-items:center;justify-content:center;padding:0}
+.ib.sk svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .sb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:58px;min-width:0;border-radius:14px;background:var(--panel2);color:var(--fg)}
 .sb svg{width:22px;height:22px;flex:none}
 .sb span{font-size:11px;font-weight:600;color:var(--dim);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .sb.on,.sb.on span{color:var(--accent)}
 #btnMark.on svg{fill:var(--accent)}
-.wpmtop{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim);font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:0 4px}
 #wpmLabel{font-size:15px;color:var(--fg);text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
 .wpmrow{display:flex;align-items:center;gap:8px}
 .wpmrow input{flex:1;min-width:0}
@@ -130,8 +128,10 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;bac
 .pane{display:none}.pane.on{display:block}
 h3{margin:22px 0 10px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
 h3:first-child{margin-top:0}
+.mark.timer{box-shadow:inset 3px 0 0 var(--accent);margin-bottom:0}
 .hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 10px}
 .hrow h3{margin:0}
+.pane>.hrow:first-child{margin-top:0}
 #sortSel{min-height:36px;max-width:55%;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);padding:0 10px;font:600 14px system-ui,-apple-system,sans-serif}
 .fold{display:flex;align-items:center;justify-content:space-between;width:100%;margin:22px 0 10px;padding:0;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;text-align:left}
 .fold svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;flex:none}
@@ -201,7 +201,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 .chap span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chap small{flex:none}
 @media (max-width:520px){ #drawer{width:100vw} .focus{width:96vw} }
-@media (max-width:360px){ .sb span{font-size:10px;letter-spacing:-.1px} .controls{padding-left:12px;padding-right:12px} .tab{font-size:11.5px} .ib.sk small{font-size:9px} }
+@media (max-width:360px){ .sb span{font-size:10px;letter-spacing:-.1px} .controls{padding-left:12px;padding-right:12px} .tab{font-size:11.5px} }
 @media (min-width:700px){
   .controls{max-width:720px;padding:6px 24px 20px}
   .ib{width:60px;height:60px}
@@ -217,7 +217,6 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
   .topbar{padding:4px 12px}.tb{width:44px;height:44px}
   #hint,#recent{display:none}
   .controls{max-width:none;display:flex;flex-wrap:wrap;align-items:center;column-gap:18px;padding:0 16px 8px}
-  .wpmblock{flex:1 1 44%}
   .progress{max-width:none;display:flex;align-items:center;gap:14px;padding:0 16px}
   .progress .stats{margin:0;white-space:nowrap;font-size:12px;flex:none}
   .scrubwrap{flex:1}
@@ -263,19 +262,11 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 
   <footer class="controls ui">
     <div class="transport main">
-      <button class="ib txt sk" id="bPrevSent" title="Previous sentence" aria-label="Previous sentence"><svg viewBox="0 0 24 24"><path d="M12 6l-6 6 6 6M19 6l-6 6 6 6"/></svg><small>sentence</small></button>
+      <button class="ib txt sk" id="bPrevSent" title="Previous sentence" aria-label="Previous sentence"><svg viewBox="0 0 24 24"><path d="M12 6l-6 6 6 6M19 6l-6 6 6 6"/></svg></button>
       <button class="ib txt" id="bBack" title="Back 10 words" aria-label="Back 10 words">&minus;10</button>
       <button class="ib play" id="bPlay" title="Play / pause" aria-label="Play or pause"></button>
       <button class="ib txt" id="bFwd" title="Forward 10 words" aria-label="Forward 10 words">+10</button>
-      <button class="ib txt sk" id="bNextSent" title="Next sentence" aria-label="Next sentence"><svg viewBox="0 0 24 24"><path d="M12 6l6 6-6 6M5 6l6 6-6 6"/></svg><small>sentence</small></button>
-    </div>
-    <div class="wpmblock">
-      <div class="wpmtop"><span>Speed</span><span id="wpmLabel">300 WPM</span></div>
-      <div class="wpmrow">
-        <button class="ib sm" id="wMinus" aria-label="Slower">&minus;</button>
-        <input type="range" id="wpm" min="150" max="1000" step="5" value="300" aria-label="Words per minute">
-        <button class="ib sm" id="wPlus" aria-label="Faster">+</button>
-      </div>
+      <button class="ib txt sk" id="bNextSent" title="Next sentence" aria-label="Next sentence"><svg viewBox="0 0 24 24"><path d="M12 6l6 6-6 6M5 6l6 6-6 6"/></svg></button>
     </div>
   </footer>
 </div>
@@ -326,6 +317,7 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
     <!-- BOOKMARKS -->
     <section class="pane" id="pane-marks">
       <button class="btn primary block" id="btnAddMark">Bookmark current position</button>
+      <div id="timerMark"></div>
       <h3>Bookmarks in this book</h3>
       <div id="markList"><p class="muted">No bookmarks yet.</p></div>
     </section>
@@ -339,6 +331,13 @@ textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:
 
     <!-- SETTINGS -->
     <section class="pane" id="pane-set">
+      <div class="hrow"><h3>Speed</h3><span id="wpmLabel">300 WPM</span></div>
+      <div class="wpmrow">
+        <button class="ib sm" id="wMinus" aria-label="Slower">&minus;</button>
+        <input type="range" id="wpm" min="150" max="1000" step="5" value="300" aria-label="Words per minute">
+        <button class="ib sm" id="wPlus" aria-label="Faster">+</button>
+      </div>
+
       <h3>Auto-pause</h3>
       <div class="seg t3">
         <button data-pref="timer" data-val="off">Off</button>
@@ -440,7 +439,7 @@ else if (prefs.timer !== 'chapter') prefs.timer = 'off';
 
 const S = {
   words: [], para: new Uint8Array(0), chapters: [], title: '', id: '',
-  cur: 0, next: 0, playing: false, timer: null, due: 0, warmElapsed: 0, lastSave: 0, chapIdx: -1, timerLeft: null, timerStart: 0, marks: [], sent: [0], norm: null, resumeBack: false
+  cur: 0, next: 0, playing: false, timer: null, due: 0, warmElapsed: 0, lastSave: 0, chapIdx: -1, timerLeft: null, timerStart: 0, marks: [], sent: [0], norm: null, sessionOn: false, parts: null, part: 0
 };
 
 const el = {
@@ -914,6 +913,20 @@ function pauseFor(tok, isPara){
   return p;
 }
 
+/* Long hyphenated words (12+ letters) are flashed in pieces, the hyphen staying on the earlier piece. */
+const partCache = new Map();
+function partsOf(w){
+  if (partCache.has(w)) return partCache.get(w);
+  let out = null;
+  if (w.length >= 12 && /[\p{L}\p{N}][-\u2010\u2011][\p{L}\p{N}]/u.test(w) && (w.match(/[\p{L}\p{N}]/gu) || []).length >= 12) {
+    const raw = w.split(/(?<=[-\u2010\u2011])(?=[\p{L}\p{N}])/u), g = [];
+    for (const r of raw) { if (g.length && g[g.length - 1].length + r.length <= 11) g[g.length - 1] += r; else g.push(r); }
+    if (g.length > 1) out = g;
+  }
+  if (partCache.size > 5000) partCache.clear();
+  partCache.set(w, out);
+  return out;
+}
 function chunkAt(i){
   const t = S.words[i];
   return { text: t, idx: orpOf(t), end: i + 1 };
@@ -939,9 +952,10 @@ function paintRecent(i){
   sp.textContent = S.words.slice(Math.max(0, i - 3), i).join(' ');
   r.appendChild(sp);
 }
-function display(i){
+function display(i, part = 0){
   const c = chunkAt(i);
-  paint(c.text, c.idx);
+  S.parts = partsOf(c.text); S.part = S.parts ? Math.min(part, S.parts.length - 1) : 0;
+  if (S.parts) paint(S.parts[S.part], orpOf(S.parts[S.part])); else paint(c.text, c.idx);
   paintRecent(i);
   return c.end;
 }
@@ -963,9 +977,17 @@ function delayFor(i, end){
   return d;
 }
 
+/* How long what is on screen should stay: a hyphenated word's time is shared out by length, its closing pause on the last piece. */
+function partDelay(){
+  const full = delayFor(S.cur, S.next), P = S.parts;
+  if (!P) return full;
+  const pause = pauseFor(S.words[S.next - 1], S.para[S.next - 1]);
+  const tot = P.reduce((a, x) => a + x.length, 0);
+  return (full - pause) * P[S.part].length / tot + (S.part === P.length - 1 ? pause : 0);
+}
 function scheduleNext(){
   clearTimeout(S.timer);
-  const d = delayFor(S.cur, S.next);
+  const d = partDelay();
   S.warmElapsed += d;
   S.due = performance.now() + d;
   S.timer = setTimeout(tick, d);
@@ -973,11 +995,18 @@ function scheduleNext(){
 function tick(){
   S.timer = null;
   if (!S.playing) return;
+  if (S.parts && S.part < S.parts.length - 1) {                         // more pieces of this hyphenated word
+    const late = Math.min(Math.max(performance.now() - S.due, 0), 40);
+    S.part++; paint(S.parts[S.part], orpOf(S.parts[S.part]));
+    const d = Math.max(0, partDelay() - late);
+    S.warmElapsed += d; S.due = performance.now() + d; S.timer = setTimeout(tick, d);
+    return;
+  }
   if (S.next >= S.words.length) { finish(); return; }
   const left = timerRemaining();
-  if (left !== null && left <= 0) { pause(); S.timerLeft = null; updateTimerBtn(); toast('Auto-paused: time is up'); return; }
+  if (left !== null && left <= 0) { pause(); S.timerLeft = null; S.sessionOn = false; updateTimerBtn(); toast('Auto-paused: time is up'); return; }
   if (prefs.timer === 'chapter' && chapterAt(S.next) !== chapterAt(S.cur)) {
-    pause(); seek(S.next);                      // wait on the first word of the next chapter
+    pause(); S.sessionOn = false; seek(S.next);                      // wait on the first word of the next chapter
     toast('Auto-paused at the end of the chapter');
     return;
   }
@@ -985,7 +1014,7 @@ function tick(){
   S.cur = S.next;
   S.next = display(S.cur);
   updateUI();
-  const d = Math.max(0, delayFor(S.cur, S.next) - late);
+  const d = Math.max(0, partDelay() - late);
   S.warmElapsed += d;
   S.due = performance.now() + d;
   S.timer = setTimeout(tick, d);
@@ -1000,7 +1029,6 @@ function seek(i){
   if (!S.words.length) return;
   i = Math.max(0, Math.min(S.words.length - 1, Math.round(i)));
   clearTimeout(S.timer); S.timer = null;
-  S.resumeBack = false;
   S.cur = i;
   S.next = display(i);
   updateUI();
@@ -1017,8 +1045,8 @@ function play(){
   if (!S.words.length) { openDrawer('lib'); return; }
   if (S.playing) return;
   if (S.next >= S.words.length) seek(0);
-  else if (S.resumeBack && S.cur > 0) seek(S.cur - 3);        // pick up a few words earlier
   S.playing = true;
+  if (prefs.timer !== 'off' && !S.sessionOn) { S.sessionOn = true; if (S.id) saveJSON('rsvp.tstart.' + S.id, { pos: S.cur, t: Date.now() }); }   // quiet marker for where this timed session began
   S.warmElapsed = 0;
   S.timerStart = performance.now();
   document.body.classList.add('playing');
@@ -1032,7 +1060,6 @@ function pause(){
   const was = S.playing;
   if (was && typeof prefs.timer === 'number') S.timerLeft = timerRemaining();      // keep the time that is left
   S.playing = false;
-  if (was) S.resumeBack = true;
   document.body.classList.remove('playing', 'idle');
   el.play.innerHTML = ICON_PLAY;
   unlockScreen();
@@ -1139,7 +1166,7 @@ function timerRemaining(){
   const base = S.timerLeft == null ? prefs.timer * 60000 : S.timerLeft;
   return Math.max(0, base - (S.playing ? performance.now() - S.timerStart : 0));
 }
-function resetTimer(){ S.timerLeft = null; if (S.playing) S.timerStart = performance.now(); }
+function resetTimer(){ S.timerLeft = null; S.sessionOn = false; if (S.playing) S.timerStart = performance.now(); }
 function updateTimerBtn(){
   const b = $('#btnTimer'), tx = $('#timerTxt');
   let t = '';
@@ -1177,6 +1204,19 @@ function addMark(){
 }
 function updateMarkBtn(){ $('#btnMark').classList.toggle('on', nearMark(S.cur) >= 0); }
 
+function renderTimerMark(){
+  const box = $('#timerMark'); box.innerHTML = '';
+  if (!S.id || !S.words.length) return;
+  const m = loadJSON('rsvp.tstart.' + S.id, null), n = S.words.length;
+  if (!m || typeof m.pos !== 'number' || m.pos < 0 || m.pos >= n || Math.abs(m.pos - S.cur) <= 30) return;
+  const row = document.createElement('div'); row.className = 'mark timer';
+  const go = document.createElement('button'); go.className = 'go';
+  const b = document.createElement('b'); b.textContent = S.words.slice(m.pos, m.pos + 8).join(' ') + '…';
+  const sm = document.createElement('small');
+  sm.textContent = ['Timer started here', cleanChapterTitle(S.chapters[chapterAt(m.pos)].title), (n > 1 ? Math.round(m.pos / (n - 1) * 100) : 0) + '%'].filter(Boolean).join(' · ');
+  go.append(b, sm); go.onclick = () => { seek(m.pos); closeDrawer(); };
+  row.appendChild(go); box.appendChild(row);
+}
 function renderMarks(){
   const list = $('#markList'), bar = $('#markbar');
   list.innerHTML = ''; bar.innerHTML = '';
@@ -1276,7 +1316,7 @@ async function loadDoc(doc, { pos = 0, autoplay = false } = {}){
   const meta = lib.find(b => b.id === S.id);
   S.title = meta ? meta.title : doc.title;        // your own rename wins over the file's name
   S.author = meta ? (meta.author || '') : (doc.author || '');
-  S.chapIdx = -1; S.norm = null;
+  S.chapIdx = -1; S.norm = null; S.sessionOn = false;
   el.docTitle.textContent = S.title;
   renderChapters();
   loadMarks();
@@ -1325,7 +1365,7 @@ async function deleteBook(id){
   if (!m) return;
   try { await DB.del('book:' + id); } catch {}
   lib = lib.filter(b => b.id !== id); saveLib();
-  try { localStorage.removeItem(posKey(id)); localStorage.removeItem('rsvp.marks.' + id); } catch {}
+  try { localStorage.removeItem(posKey(id)); localStorage.removeItem('rsvp.marks.' + id); localStorage.removeItem('rsvp.tstart.' + id); } catch {}
   if (id === S.id) resetReader();
   renderLibrary();
 }
@@ -1333,7 +1373,7 @@ async function deleteEverything(){
   pause();
   for (const m of lib) {
     try { await DB.del('book:' + m.id); } catch {}
-    try { localStorage.removeItem(posKey(m.id)); localStorage.removeItem('rsvp.marks.' + m.id); } catch {}
+    try { localStorage.removeItem(posKey(m.id)); localStorage.removeItem('rsvp.marks.' + m.id); localStorage.removeItem('rsvp.tstart.' + m.id); } catch {}
   }
   try { await DB.del('current'); localStorage.removeItem('rsvp.pos'); } catch {}
   lib = []; saveLib();
@@ -1556,6 +1596,7 @@ async function restoreLibrary(file){
 function openDrawer(tab){
   if (S.playing) pause();
   renderLibrary();
+  renderTimerMark();
   if (tab) showTab(tab);
   el.drawer.classList.add('open');
   applyFold(); el.backdrop.classList.add('open');
@@ -1568,6 +1609,7 @@ function closeDrawer(){
 function showTab(t){
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   $$('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + t));
+  if (t === 'marks') renderTimerMark();
   if (t === 'search') { renderSearch(); setTimeout(() => { try { $('#q').focus(); } catch {} }, 60); }
 }
 
