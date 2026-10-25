@@ -1,466 +1,2030 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% witseiepaper-2026.tex
-%
-%                       Jessie Cheng (October 2026)
-%
-%                       ELEN4002A/ELEN4012A Investigation Project Paper
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>RSVP Speed Reader</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RSVP Reader">
+<meta name="theme-color" content="#000000" id="metaTheme">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="RSVP speed reader with Optimal Recognition Point display. Runs fully offline in your browser.">
 
-\documentclass[10pt,twocolumn]{witseiepaper}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=Literata:wght@400;500;600;700&family=Merriweather:wght@400;700&family=EB+Garamond:wght@400;500;600;700&family=Lexend:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/opendyslexic">
 
-%
-% All KJN's macros and goodies (some shameless borrowing from SPL)
-\usepackage{KJN}
-\usepackage{pdfpages}
-\usepackage{tikz}
-\usepackage{url}
-\usepackage{seqsplit}
-%
-% PDF Info
-%
-\ifpdf
-\pdfinfo{
-/Title (INVESTIGATING EMOTION-INSPIRED INFERENCE PARAMETER MODULATION IN LARGE LANGUAGE MODELS: [SUBTITLE])
-/Author (Jessie Cheng)
-/CreationDate (D:202609091200)
-/ModDate (D:202610221200)
-/Subject (ELEN4012A Information Engineering Laboratory Paper, 2026)
-/Keywords (Four to six key words in alphabetical order, separated by commas)
+<style>
+:root{
+  --bg:#000; --fg:#f2f2f2; --dim:#7a7a7a; --line:#2e2e2e;
+  --panel:#111; --panel2:#1c1c1c; --accent:#e63946;
+  --font:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --size:72px;
 }
-\fi
+[data-theme="light"]{--bg:#faf9f6;--fg:#1c1c1c;--dim:#8a8a85;--line:#d8d6cf;--panel:#ffffff;--panel2:#eeece6}
+[data-theme="sepia"]{--bg:#f4ecd8;--fg:#433422;--dim:#9a8a70;--line:#d9ccb0;--panel:#faf3e2;--panel2:#eadfc4}
+[data-theme="solar"]{--bg:#002b36;--fg:#fdf6e3;--dim:#93a1a1;--line:#2d5560;--panel:#073642;--panel2:#0d4452}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{document}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  overflow:hidden;overscroll-behavior:none;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  transition:background .25s,color .25s}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-% GUIDELINE 1: Choose a subtitle after the colon that accurately describes 
-% YOUR unique contribution to the project (e.g., focusing on your surveys, 
-% PMR parameters, grid search, and scoring validation).
-\title{INVESTIGATING EMOTION-INSPIRED INFERENCE PARAMETER MODULATION IN LARGE LANGUAGE MODELS: A PSYCHOMETRIC EVALUATION}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 
-\author{Jessie Cheng, 2600331
-\thanks{School of Electrical \& Information Engineering, University of the
-Witwatersrand, Private Bag 3, 2050, Johannesburg, South Africa}
+/* ---------- top bar ---------- */
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px}
+#btnLib{order:1}.title{order:2}#btnSet{order:3}
+.tools{order:4;flex:1 0 100%;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tools .sb{height:50px}
+.tb{width:46px;height:46px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;flex:none}
+.tb svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb:active{transform:scale(.94)}
+.title{flex:1;min-width:0;text-align:center;line-height:1.25}
+#docTitle{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chapTitle{font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.25em}
+
+/* ---------- stage ---------- */
+#stage{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;cursor:pointer;padding:0 8px;overflow:hidden}
+.focus{position:relative;width:min(94vw,1100px);padding:.5em 0;font-size:var(--size);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-family:var(--font)}
+.tick{position:absolute;left:50%;width:2px;height:16px;margin-left:-1px;background:var(--accent);opacity:.85}
+.tick.top{top:0}.tick.bot{bottom:0}
+.word{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:baseline;
+  line-height:1.3;font-weight:500;white-space:pre;transform-origin:50% 50%}
+.side{display:flex;min-width:0}
+.side.left{justify-content:flex-end}
+.side.right{justify-content:flex-start}
+.orp{color:var(--accent);font-weight:700;text-align:center}
+.fwrap{position:relative;width:min(94vw,1100px)}
+.fwrap .focus{width:100%}
+#recent{position:absolute;left:0;right:0;bottom:100%;margin-bottom:.9em;display:flex;justify-content:center;color:var(--dim);opacity:.65;
+  font-family:var(--font);font-size:clamp(16px,calc(var(--size)*.3),30px);white-space:nowrap;overflow:hidden;min-height:1.4em;transition:opacity .25s}
+#recent span{flex:none}
+body.playing #recent{opacity:0}
+#q{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 14px;font:16px system-ui,-apple-system,sans-serif;-webkit-user-select:text;user-select:text;-webkit-appearance:none;appearance:none}
+#searchInfo{margin:10px 2px 8px;min-height:1.2em}
+.mark .go b.snip{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:500;line-height:1.35}
+.hl{color:var(--accent);font-weight:700}
+.btnrow{display:flex;gap:8px}.btnrow .btn{flex:1;position:relative}
+#hint{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:13px;color:var(--dim);pointer-events:none;transition:opacity .3s}
+body.playing #hint{opacity:0}
+
+/* ---------- controls ---------- */
+.controls{width:100%;max-width:640px;margin:0 auto;padding:2px 16px 12px}
+.ui{transition:opacity .6s}
+body.playing.idle .ui{opacity:.12}
+.progress{width:100%;max-width:640px;margin:0 auto;padding:2px 16px 0}
+.stats{text-align:center;font-size:13.5px;line-height:1.35;color:var(--dim);font-variant-numeric:tabular-nums;margin:0 0 2px}
+.transport{display:flex;align-items:center;gap:8px}
+.transport.main{justify-content:center;margin:0 auto 10px;max-width:460px}
+.ib{border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-weight:700;font-size:15px;flex:none;width:52px;height:52px}
+.ib svg{width:24px;height:24px;fill:currentColor}
+.ib.txt{flex:1 1 0;min-width:0;max-width:76px;width:auto;height:54px;border-radius:27px;font-variant-numeric:tabular-nums}
+.ib.play{width:76px;height:76px;background:var(--accent);color:#fff}
+.ib.play svg{width:34px;height:34px}
+.ib.sm{width:46px;height:46px;font-size:24px}
+.ib:active,.sb:active{transform:scale(.95)}
+.ib[disabled],.sb[disabled]{opacity:.35;pointer-events:none}
+.ib.sk{display:flex;align-items:center;justify-content:center;padding:0}
+.ib.sk svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.sb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:58px;min-width:0;border-radius:14px;background:var(--panel2);color:var(--fg)}
+.sb svg{width:22px;height:22px;flex:none}
+.sb span{font-size:11px;font-weight:600;color:var(--dim);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.sb.on,.sb.on span{color:var(--accent)}
+#btnMark.on svg{fill:var(--accent)}
+#wpmLabel{font-size:15px;color:var(--fg);text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+.wpmrow{display:flex;align-items:center;gap:8px}
+.wpmrow input{flex:1;min-width:0}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--line)}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--accent);margin-top:-11px;border:0}
+input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:var(--accent);border:0}
+
+/* ---------- drawer ---------- */
+#backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
+#backdrop.open{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,94vw);background:var(--panel);color:var(--fg);z-index:21;
+  transform:translateX(102%);transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) 0;box-shadow:-8px 0 30px rgba(0,0,0,.35)}
+#drawer.open{transform:none}
+.dhead{display:flex;align-items:center;gap:4px;padding:12px 10px 12px 12px;border-bottom:1px solid var(--line)}
+.tabs{flex:1;display:flex;gap:6px}
+.tab{flex:1;min-width:0;padding:0 2px;min-height:42px;border-radius:10px;font-weight:600;font-size:15px;color:var(--dim)}
+.tab.on{background:var(--panel2);color:var(--fg)}
+.close{width:42px;height:42px;font-size:26px;line-height:1;color:var(--dim)}
+.dbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px 28px;-webkit-user-select:text;user-select:text}
+.pane{display:none}.pane.on{display:block}
+h3{margin:22px 0 10px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+h3:first-child{margin-top:0}
+.mark.timer{box-shadow:inset 3px 0 0 var(--accent);margin-bottom:0}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 10px}
+.hrow h3{margin:0}
+.pane>.hrow:first-child{margin-top:0}
+#sortSel{min-height:36px;max-width:55%;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);padding:0 10px;font:600 14px system-ui,-apple-system,sans-serif}
+.fold{display:flex;align-items:center;justify-content:space-between;width:100%;margin:22px 0 10px;padding:0;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;text-align:left}
+.fold svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;flex:none}
+.fold[aria-expanded=true] svg{transform:rotate(180deg)}
+textarea{width:100%;min-height:170px;resize:vertical;padding:12px;border-radius:12px;border:1px solid var(--line);
+  background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,sans-serif}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:12px;
+  background:var(--panel2);font-weight:600;font-size:16px;position:relative;overflow:hidden}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.block{display:flex;width:100%}
+.btn input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.gap{height:10px}
+#status{margin-top:12px;font-size:14px;min-height:1.3em;color:var(--dim)}
+#status.err{color:#e5484d}
+#drop.drag{outline:2px dashed var(--accent)}
+#chapList[hidden]{display:none}
+#chapList{display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow-y:auto;padding:2px}
+.chap{display:flex;justify-content:space-between;gap:10px;text-align:left;padding:11px 12px;border-radius:10px;background:var(--panel2);font-size:15px}
+.chap small{color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+.chap.on{outline:2px solid var(--accent)}
+.muted{color:var(--dim);font-size:14px}
+
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:70px;min-height:46px;padding:0 10px;border-radius:10px;background:var(--panel2);font-weight:600;font-size:14px;border:2px solid transparent}
+.seg button.on{border-color:var(--accent)}
+.sw{width:46px;height:46px;border-radius:50%!important;flex:none!important;min-width:0!important;padding:0!important;border:3px solid transparent}
+.sw.on{border-color:var(--fg)!important}
+.themebtn{display:flex;align-items:center;justify-content:center;gap:8px}
+.themebtn i{width:18px;height:18px;border-radius:50%;border:1px solid var(--dim);flex:none}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;font-size:16px}
+.row input[type=checkbox]{-webkit-appearance:none;appearance:none;width:52px;height:30px;border-radius:15px;background:var(--line);position:relative;transition:background .2s;flex:none;cursor:pointer}
+.row input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.row input[type=checkbox]:checked{background:var(--accent)}
+.row input[type=checkbox]:checked::after{transform:translateX(22px)}
+.sizeprev{font-family:var(--font);font-size:22px;margin-top:4px;color:var(--dim)}
+.colorpick{position:relative;display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border-radius:12px;background:var(--panel2);cursor:pointer}
+.colorpick .chip{width:34px;height:34px;border-radius:50%;background:var(--accent);border:2px solid var(--fg);flex:none}
+.colorpick .lbl{flex:1;font-weight:600;font-size:15px}
+.colorpick .hex{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;text-transform:uppercase}
+.colorpick input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;cursor:pointer}
+.danger{color:#e5484d}
+.seg.fonts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg.t3 button{min-width:calc(33.333% - 6px)}
+.seg.fonts button{min-width:0;min-height:50px;font-size:16px;font-weight:500}
+.scrubwrap{position:relative}
+#markbar{position:absolute;left:14px;right:14px;top:9px;height:18px;pointer-events:none}
+#markbar i{position:absolute;top:0;width:4px;height:18px;margin-left:-2px;border-radius:2px;background:var(--accent);opacity:.9}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 178px);transform:translate(-50%,-10px);background:var(--fg);color:var(--bg);
+  padding:10px 18px;border-radius:22px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.mark{display:flex;align-items:center;background:var(--panel2);border-radius:10px;margin-bottom:6px}
+.mark .go{flex:1;min-width:0;text-align:left;padding:11px 12px}
+.mark .go b{display:block;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mark .go small{display:block;color:var(--dim);font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book.on{outline:2px solid var(--accent)}
+#bookList{margin-bottom:4px}
+.mark .del.armed{width:auto;height:38px;margin-right:6px;padding:0 12px;font-size:14px;font-weight:600;color:var(--accent);background:transparent;border:2px solid var(--accent);border-radius:10px}
+.btn.danger.armed{color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.mark .del{width:46px;height:46px;font-size:22px;color:var(--dim);flex:none}
+.mark .edit{width:42px;height:46px;flex:none;display:grid;place-items:center;color:var(--dim)}
+.mark .edit svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mark.editing{display:block;padding:12px}
+.editform label{display:block;font-size:12.5px;color:var(--dim);margin:0 0 4px}
+.editform input[type=text]{width:100%;min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 12px;font:16px system-ui,-apple-system,sans-serif;margin-bottom:10px;-webkit-user-select:text;user-select:text}
+.editform .acts{display:flex;gap:8px}
+.editform .acts .btn{flex:1;min-height:44px}
+.chap span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chap small{flex:none}
+@media (max-width:520px){ #drawer{width:100vw} .focus{width:96vw} }
+@media (max-width:360px){ .sb span{font-size:10px;letter-spacing:-.1px} .controls{padding-left:12px;padding-right:12px} .tab{font-size:11.5px} }
+@media (min-width:700px){
+  .controls{max-width:720px;padding:6px 24px 20px}
+  .ib{width:60px;height:60px}
+  .ib.txt{max-width:88px;height:62px;border-radius:31px;font-size:16px}
+  .ib.play{width:88px;height:88px}
+  .tools{order:3;flex:0 0 auto;display:flex;gap:6px}.tools .sb{width:72px;height:54px}.sb svg{width:24px;height:24px}.sb span{font-size:11.5px}
+  #btnSet{order:4}
+  .tb{width:50px;height:50px}
+  .stats{font-size:15px}
+  .progress{max-width:720px;padding:4px 24px 0}
+}
+@media (max-height:520px) and (orientation:landscape){
+  .topbar{padding:4px 12px}.tb{width:44px;height:44px}
+  #hint,#recent{display:none}
+  .controls{max-width:none;display:flex;flex-wrap:wrap;align-items:center;column-gap:18px;padding:0 16px 8px}
+  .progress{max-width:none;display:flex;align-items:center;gap:14px;padding:0 16px}
+  .progress .stats{margin:0;white-space:nowrap;font-size:12px;flex:none}
+  .scrubwrap{flex:1}
+  .transport.main{flex:1 1 44%;margin:0;max-width:none}
+  .ib,.ib.txt{height:46px}.ib{width:46px}.ib.play{width:58px;height:58px}
+  .tools .sb{width:54px;height:44px}.sb span{display:none}
+  input[type=range]{height:28px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar ui">
+    <button class="tb" id="btnLib" title="Library" aria-label="Library and books"><svg viewBox="0 0 24 24"><path d="M5 4h4v16H5zM11 4h4v16h-4zM17.2 5.4l3.2.9-3.6 13.6-3.2-.9z"/></svg></button>
+    <div class="title"><div id="docTitle">RSVP Speed Reader</div><div id="chapTitle"></div></div>
+    <button class="tb" id="btnSet" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.4"/><circle cx="8" cy="17" r="2.4"/></svg></button>
+    <div class="tools">
+      <button class="sb" id="bRestart" title="Restart" aria-label="Restart"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg><span>Restart</span></button>
+      <button class="sb" id="bPrevCh" title="Previous chapter" aria-label="Previous chapter"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12L9.5 12z"/></svg><span>Prev. ch.</span></button>
+      <button class="sb" id="bNextCh" title="Next chapter" aria-label="Next chapter"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM4 6v12l10.5-6z"/></svg><span>Next ch.</span></button>
+      <button class="sb" id="btnMark" title="Bookmark this spot (B)" aria-label="Bookmark this spot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>Bookmark</span></button>
+      <button class="sb" id="btnTimer" title="Auto-pause timer" aria-label="Auto-pause timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="timerTxt">Timer</span></button>
+    </div>
+  </header>
+
+  <section class="progress ui">
+    <div class="stats" id="stats">No text loaded</div>
+    <div class="scrubwrap"><div id="markbar"></div><input type="range" id="scrub" min="0" max="0" value="0" aria-label="Reading position"></div>
+  </section>
+
+  <main id="stage" aria-label="Reading area. Tap to play or pause.">
+    <div class="fwrap"><div id="recent"></div>
+    <div class="focus">
+      <i class="tick top"></i><i class="tick bot"></i>
+      <div class="word" id="word" aria-live="off">
+        <div class="side left"><span id="wl"></span></div>
+        <div class="orp" id="wo"></div>
+        <div class="side right"><span id="wr"></span></div>
+      </div>
+    </div></div>
+    <div id="hint">Tap anywhere to play / pause</div>
+  </main>
+
+  <footer class="controls ui">
+    <div class="transport main">
+      <button class="ib txt sk" id="bPrevSent" title="Previous sentence" aria-label="Previous sentence"><svg viewBox="0 0 24 24"><path d="M12 6l-6 6 6 6M19 6l-6 6 6 6"/></svg></button>
+      <button class="ib txt" id="bBack" title="Back 10 words" aria-label="Back 10 words">&minus;10</button>
+      <button class="ib play" id="bPlay" title="Play / pause" aria-label="Play or pause"></button>
+      <button class="ib txt" id="bFwd" title="Forward 10 words" aria-label="Forward 10 words">+10</button>
+      <button class="ib txt sk" id="bNextSent" title="Next sentence" aria-label="Next sentence"><svg viewBox="0 0 24 24"><path d="M12 6l6 6-6 6M5 6l6 6-6 6"/></svg></button>
+    </div>
+  </footer>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="backdrop"></div>
+<aside id="drawer" aria-hidden="true">
+  <div class="dhead">
+    <div class="tabs">
+      <button class="tab on" data-tab="lib">Library</button>
+      <button class="tab" data-tab="marks">Bookmarks</button>
+      <button class="tab" data-tab="search">Search</button>
+      <button class="tab" data-tab="set">Settings</button>
+    </div>
+    <button class="close" id="btnClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="dbody">
+    <!-- LIBRARY -->
+    <section class="pane on" id="pane-lib">
+      <h3>Paste text</h3>
+      <textarea id="paste" placeholder="Paste an article, chapter or any text here…"></textarea>
+      <div class="gap"></div>
+      <button class="btn primary block" id="btnLoad">Load &amp; Start</button>
+
+      <h3>Open a file</h3>
+      <div id="drop">
+        <label class="btn block">Choose .epub, .txt, .md or .tex file
+          <input type="file" id="file" accept=".epub,.txt,.md,.markdown,.tex,.latex,application/epub+zip,text/plain,text/markdown,application/x-tex,text/x-tex">
+        </label>
+      </div>
+      <div id="status"></div>
+
+      <div class="hrow"><h3>Your books</h3>
+        <select id="sortSel" aria-label="Sort books">
+          <option value="recent">Last read</option>
+          <option value="added">Newest added</option>
+          <option value="oldest">Oldest added</option>
+          <option value="az">Title A–Z</option>
+          <option value="za">Title Z–A</option>
+          <option value="progress">Most read</option>
+        </select></div>
+      <div id="bookList"></div>
+
+      <button class="fold" id="chapToggle" aria-expanded="false"><span id="chapLabel">Chapters in this book</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div id="chapList" hidden><p class="muted">No chapters.</p></div>
+    </section>
+
+    <!-- BOOKMARKS -->
+    <section class="pane" id="pane-marks">
+      <button class="btn primary block" id="btnAddMark">Bookmark current position</button>
+      <div id="timerMark"></div>
+      <h3>Bookmarks in this book</h3>
+      <div id="markList"><p class="muted">No bookmarks yet.</p></div>
+    </section>
+
+    <!-- SEARCH -->
+    <section class="pane" id="pane-search">
+      <input type="search" id="q" placeholder="Search this book" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search this book">
+      <div id="searchInfo" class="muted"></div>
+      <div id="searchList"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="pane" id="pane-set">
+      <div class="hrow"><h3>Speed</h3><span id="wpmLabel">300 WPM</span></div>
+      <div class="wpmrow">
+        <button class="ib sm" id="wMinus" aria-label="Slower">&minus;</button>
+        <input type="range" id="wpm" min="150" max="1000" step="5" value="300" aria-label="Words per minute">
+        <button class="ib sm" id="wPlus" aria-label="Faster">+</button>
+      </div>
+
+      <h3>Auto-pause</h3>
+      <div class="seg t3">
+        <button data-pref="timer" data-val="off">Off</button>
+        <button data-pref="timer" data-val="chapter">End of chapter</button>
+        <button data-pref="timer" data-val="15">15 min</button>
+        <button data-pref="timer" data-val="30">30 min</button>
+        <button data-pref="timer" data-val="60">60 min</button>
+      </div>
+
+      <h3>Theme</h3>
+      <div class="seg">
+        <button class="themebtn" data-pref="theme" data-val="dark"><i style="background:#000"></i>Dark</button>
+        <button class="themebtn" data-pref="theme" data-val="light"><i style="background:#faf9f6"></i>Light</button>
+        <button class="themebtn" data-pref="theme" data-val="sepia"><i style="background:#f4ecd8"></i>Sepia</button>
+        <button class="themebtn" data-pref="theme" data-val="solar"><i style="background:#002b36"></i>Solarized</button>
+      </div>
+
+      <h3>Focus letter colour</h3>
+      <label class="colorpick">
+        <span class="chip" id="accentChip"></span>
+        <span class="lbl">Tap to choose any colour</span>
+        <span class="hex" id="accentHex"></span>
+        <input type="color" id="accentCustom" value="#e63946" aria-label="Focus letter colour">
+      </label>
+
+      <h3>Typeface</h3>
+      <div class="seg fonts" id="fontSeg"></div>
+
+      <h3>Font size</h3>
+      <input type="range" id="size" min="36" max="140" step="2">
+      <div class="sizeprev" id="sizePrev">Reading</div>
+
+      <h3>Assistance</h3>
+      <label class="row"><span>Warm-up (ramp speed over 30 s)</span><input type="checkbox" id="optWarm"></label>
+
+      <h3>Data</h3>
+      <div class="btnrow">
+        <button class="btn" id="btnBackup">Back up library</button>
+        <label class="btn">Restore backup<input type="file" id="restoreFile" accept=".json,application/json"></label>
+      </div>
+      <p class="muted" id="dataMsg"></p>
+      <div class="gap"></div>
+      <button class="btn block danger" id="btnClear">Delete all books, bookmarks &amp; progress</button>
+      <p class="muted">Keyboard: Space play/pause &middot; &larr;/&rarr; 10 words &middot; Shift+&larr;/&rarr; sentence &middot; &uarr;/&darr; speed &middot; R restart &middot; B bookmark</p>
+    </section>
+  </div>
+</aside>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   Helpers & state
+   ===================================================================== */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const root = document.documentElement;
+
+const FONTS = {
+  sans: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  georgia: 'Georgia, "Times New Roman", serif',
+  charter: 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif',
+  palatino: '"Palatino Linotype", Palatino, "Book Antiqua", "URW Palladio L", Georgia, serif',
+  garamond: '"EB Garamond", Garamond, "Hoefler Text", "Times New Roman", serif',
+  literata: 'Literata, Charter, Georgia, serif',
+  merriweather: 'Merriweather, Georgia, serif',
+  atkinson: '"Atkinson Hyperlegible", Verdana, system-ui, sans-serif',
+  lexend: 'Lexend, Verdana, system-ui, sans-serif',
+  dyslexic: 'OpenDyslexic, "Atkinson Hyperlegible", "Comic Sans MS", system-ui, sans-serif',
+  mono: 'ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace'
+};
+const FONT_LIST = [['sans', 'Sans'], ['georgia', 'Georgia'], ['charter', 'Charter'], ['palatino', 'Palatino'], ['garamond', 'Garamond'],
+  ['literata', 'Literata'], ['merriweather', 'Merriweather'], ['atkinson', 'Atkinson'], ['lexend', 'Lexend'],
+  ['dyslexic', 'OpenDyslexic'], ['mono', 'Monospace']];
+(function buildFontButtons(){
+  const box = $('#fontSeg');
+  FONT_LIST.forEach(([k, label]) => {
+    const b = document.createElement('button');
+    b.dataset.pref = 'font'; b.dataset.val = k; b.textContent = label; b.style.fontFamily = FONTS[k];
+    box.appendChild(b);
+  });
+})();
+const THEME_COLORS = { dark:'#000000', light:'#faf9f6', sepia:'#f4ecd8', solar:'#002b36' };
+
+const COMMA = 170, CLAUSE = 260, SENT = 350, PARA = 400;      // ms pauses: comma < ; : dash < sentence end < paragraph
+const WARMUP_MS = 30000;
+
+function loadJSON(k, d){ try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } }
+function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+const prefs = Object.assign(
+  { theme:'dark', accent:'#e63946', font:'sans', size:72, wpm:300, warmup:false, timer:'off', sort:'recent', chapOpen:false },
+  loadJSON('rsvp.prefs', {})
+);
+// older versions offered more timer lengths; map a saved one to the nearest option at or above it
+if (typeof prefs.timer === 'number') prefs.timer = [15, 30, 60].find(m => m >= prefs.timer) || 60;
+else if (prefs.timer !== 'chapter') prefs.timer = 'off';
+
+const S = {
+  words: [], para: new Uint8Array(0), chapters: [], title: '', id: '',
+  cur: 0, next: 0, playing: false, timer: null, due: 0, warmElapsed: 0, lastSave: 0, chapIdx: -1, timerLeft: null, timerStart: 0, marks: [], sent: [0], norm: null, sessionOn: false, parts: null, part: 0
+};
+
+const el = {
+  wl:$('#wl'), wo:$('#wo'), wr:$('#wr'), word:$('#word'),
+  scrub:$('#scrub'), stats:$('#stats'), play:$('#bPlay'), wpm:$('#wpm'), wpmLabel:$('#wpmLabel'),
+  docTitle:$('#docTitle'), chapTitle:$('#chapTitle'), status:$('#status'), chapList:$('#chapList'),
+  drawer:$('#drawer'), backdrop:$('#backdrop')
+};
+
+const ICON_PLAY  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+
+/* =====================================================================
+   IndexedDB (stores the current book so progress survives restarts)
+   ===================================================================== */
+const DB = {
+  open(){ return new Promise((res, rej) => {
+    const r = indexedDB.open('rsvp-reader', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('docs');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  }); },
+  async put(k, v){ const db = await this.open(); return new Promise((res, rej) => {
+    const tx = db.transaction('docs', 'readwrite'); tx.objectStore('docs').put(v, k);
+    tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+  }); },
+  async get(k){ const db = await this.open(); return new Promise((res, rej) => {
+    const rq = db.transaction('docs').objectStore('docs').get(k);
+    rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+  }); },
+  async del(k){ const db = await this.open(); return new Promise((res, rej) => {
+    const tx = db.transaction('docs', 'readwrite'); tx.objectStore('docs').delete(k);
+    tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+  }); }
+};
+
+/* =====================================================================
+   Text ingestion
+   ===================================================================== */
+/* Run-on chapter names ("Author's Note. Hello dear readers, ...") are cut back to the real name. */
+const NOTE_RE = /^(author['\u2019`]?s?\s+note|a\s+note\s+(?:from|to)\s+(?:the\s+)?(?:author|readers?)|note\s+(?:from|to)\s+(?:the\s+)?(?:author|readers?)|about\s+the\s+author|acknowledge?ments?|dedication|epigraph|foreword|afterword)(?=\s|$|[.:,;!?\u2014\u2013-])/i;
+function cleanChapterTitle(s, max = 60){
+  s = String(s || '').replace(/\s+/g, ' ').trim();
+  const note = s.match(NOTE_RE);                                    // "Author's Note It has been a pleasure…" -> "Author's Note"
+  if (note && s.length > note[0].length + 12) return note[0];
+  if (s.length <= max) return s;
+  const m = s.slice(0, max + 1).match(/^(.{3,}?)(?:[.!?…:;](?=\s|$)|\s[—–|]\s)/);
+  if (m && !/^(chapter|part|book|ch|vol|volume|section|act)\.?\s*[\divxlc]+$/i.test(m[1].trim())) return m[1].trim();
+  let cut = s.slice(0, max - 1);
+  const sp = cut.lastIndexOf(' ');
+  if (sp > 20) cut = cut.slice(0, sp);
+  return cut.replace(/[\s,;:—–-]+$/, '') + '…';
+}
+/* A downloaded file name is often junk; tidy it, and spot metadata titles that are useless. */
+function cleanFileName(s){
+  return String(s || '').replace(/\.(epub|txt|md|markdown|tex|latex)$/i, '')
+    .replace(/[\[(][^\])]*(z-?lib|libgen|\.org|\.com|\.net|epub)[^\])]*[\])]/ig, ' ')
+    .replace(/_+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+const badTitle = t => { t = String(t || '').trim(); return !t || /^(unknown|untitled|title|document|book|no title)$/i.test(t) || /^[0-9a-f]{16,}$/i.test(t) || /^[\w-]{25,}$/.test(t); };
+function joinAuthors(list){
+  const seen = [];
+  for (const a of list) { const t = String(a || '').replace(/\s+/g, ' ').trim(); if (t && !seen.includes(t)) seen.push(t); }
+  return seen.slice(0, 3).join(', ') + (seen.length > 3 ? ' et al.' : '');
 }
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-\abstract{
-% BLUE BOOK 8.4.1 & GUIDELINE 4: Write this last. Maximum of 8 lines, single 
-% paragraph, full sentences. Do NOT write "This work was completed as part of 
-% a 4th year lab project."
-% Part 1: Purpose of the investigation.
-% Part 2: Depth of treatment and methodology (psychometric battery, PMR vs TKR grid).
-% Part 3: Specific key results achieved.
-% Part 4: Main conclusions and recommendations for future work.
-to be added once body is written
+function Builder(){
+  const words = [], para = [], chapters = [];
+  return {
+    words, para, chapters,
+    chapter(title){
+      title = cleanChapterTitle(title);
+      const last = chapters[chapters.length - 1];
+      if (last && last.start === words.length) last.title = title;
+      else chapters.push({ title, start: words.length });
+    },
+    addPara(text){
+      text = text
+        .replace(/[\u200b\u2028\u2029\u2002-\u200a\u202f\u205f\u3000]/g, ' ')   // exotic spaces separate words
+        .replace(/[\u00ad\u200c\u200d\ufeff]/g, '')
+        .replace(/\s*--+\s*/g, '\u2014')
+        .replace(/(\S)(\u2014|\u2013|\u2015)(?=\S)/g, '$1$2 ')
+        .replace(/([a-z]{2,}[.!?]["'\u201d\u2019]?)(?=[A-Z][a-z])/g, '$1 ')      // "end.Next" with a missing space
+        .replace(/([a-z]{2,}[\u2026])(?=[A-Za-z])/g, '$1 ')
+        .replace(/(\p{L}{2,}[;:,])(?=\p{L})/gu, '$1 ');                          // "however,the" / "one;two" with no space
+      const before = words.length;
+      for (const tok of text.split(/\s+/)) {
+        if (!tok) continue;
+        if (!/[\p{L}\p{N}]/u.test(tok)) {
+          // pure punctuation: glue dashes, ellipses, ; : , and closing quotes/brackets to the previous word, drop the rest (bullets etc.)
+          if (/^[\u2014\u2013.\u2026!?;:,"'\u201d\u2019\u00bb)\]}]+$/.test(tok) && words.length > before) words[words.length - 1] += tok;
+          continue;
+        }
+        words.push(tok); para.push(0);
+      }
+      if (words.length > before) para[words.length - 1] = 1;
+    },
+    finish(title){
+      if (!chapters.length || chapters[0].start > 0) chapters.unshift({ title: chapters.length ? 'Beginning' : title, start: 0 });
+      return { title, words, para: Uint8Array.from(para), chapters };
+    }
+  };
 }
 
-\keywords{
-% Four to six key words in alphabetical order, separated by commas. Must be used in report.
+function stripMd(s){
+  return s
+    .replace(/^(```|~~~).*$/gm, '')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\[[^\]]*\]/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/^\s{0,3}>+\s?/gm, '')
+    .replace(/^\s*([-*+]|\d+[.)])\s+/gm, '')
+    .replace(/^\s*([-*_]\s*){3,}$/gm, '')
+    .replace(/(\*\*|__)(.+?)\1/g, '$2')
+    .replace(/(^|[\s(])\*(\S(?:.*?\S)?)\*(?=[\s).,;:!?]|$)/g, '$1$2')
+    .replace(/(^|[\s(])_(\S(?:.*?\S)?)_(?=[\s).,;:!?]|$)/g, '$1$2')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/`([^`]+)`/g, '$1');
 }
 
-
-\maketitle
-\thispagestyle{empty}\pagestyle{empty}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-\section{INTRODUCTION}
-
-Human emotional states are shaped by neurochemical processes that influence decision-making and behavioural regulation[citeneeded]. To conceptualise this, Lövheim proposed a three-dimensional model relating emotions to varying levels of noradrenaline, serotonin, and dopamine[citeneeded]. In contrast, large language models (LLMs) lack an internal neurochemical architecture, generating text instead through statistical token prediction[citeneeded]. While prompt design and inference parameters dictate conversational tone, these values typically remain static unless explicitly modified[citeneeded]. 
-
-This limitation is increasingly critical as LLMs see widespread adoption for emotional support and companionship. When parameters remain fixed, an LLM's response behaviour fails to adapt to a user's shifting emotional context[citeneeded]. Although prior research has examined perceived LLM emotionality[citeneeded], the systematic influence of inference parameters remains underexplored. 
-
-This paper investigates whether emotion-inspired adjustments to inference parameters can produce measurable, repeatable psychometric response profiles, ultimately evaluating the feasibility of utilising these parameters as an affective control mechanism.
-
-The remainder of this paper is structured as follows. Section 2 reviews theoretical background and instruments. Section 3 describes the survey administration and parameter-testing methodology. Section 4 presents quantitative results and analysis. Section 5 provides a critical evaluation of limitations, and Section 6 concludes the study.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-
-\section{LITERATURE REVIEW}
-
-This investigation proposed an operational mapping between the Lövheim axes and controllable LLM inference parameters. Noradrenaline was associated with Top-$K$ and Top-$P$, dopamine with temperature and Min-$P$, and serotonin with repetition penalty. These associations were treated as hypotheses rather than biological equivalences. Psychometric surveys were used to test whether modulating the associated parameters produced response profiles consistent with the corresponding emotion vertices.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Psychometric Instruments}
-
-The investigation used the Lövheim cube as a theoretical framework for relating generated emotional responses to serotonin, dopamine and noradrenaline levels [citeneeded]. The cube assigns eight basic emotions to the high and low combinations of these three axes. Psychometric instruments were therefore selected to provide numerical measures associated with the cube's emotion vertices.
-
-\begin{figure}[htb] 
-\centering 
-\includegraphics[width=\columnwidth]{lovheim_cube.jpg} \caption{Lövheim's cube of emotion [citeneeded].} 
-\label{fig:lovheim_cube} 
-\end{figure}
-
-The \textit{Affective Neuroscience Personality Scales -- Short Form (ANPS-S)} provided the broadest coverage of the cube. It contains six subscales representing SEEKING, PLAYFULNESS, CARING, ANGER, FEAR and SADNESS [citeneeded]. SEEKING and PLAYFULNESS were associated with interest and joy, while ANGER, FEAR and SADNESS represented rage, terror and distress. CARING was retained as an additional prosocial measure, although it does not correspond directly with a cube vertex.
-
-The \textit{Guilt and Shame Proneness Scale (GASP)} was selected to represent shame-related responses. It separates guilt into negative behaviour evaluation and repair, and shame into negative self-evaluation and withdrawal [citeneeded]. This distinction was important because guilt concerns the evaluation or correction of an action, whereas shame concerns negative self-evaluation and avoidance. The shame subscales were therefore more directly related to the Shame/Humiliation vertex of the cube.
-
-The \textit{Intolerance of Uncertainty Scale -- Short Form (IUS-S)} was used as a proxy measure for surprise and uncertainty-related responses. It contains prospective anxiety and inhibitory anxiety subscales [citeneeded]. Prospective anxiety measures the desire for predictability and discomfort with unexpected events, while inhibitory anxiety measures hesitation or difficulty acting under uncertainty. The mapping to surprise was indirect, since the IUS-S measures a response to uncertainty rather than surprise itself.
-
-The \textit{Three-Domain Disgust Scale (TDDS)} was selected for the Contempt/Disgust vertex. It measures pathogen, sexual and moral disgust as separate domains [citeneeded]. Pathogen disgust concerns contamination and disease avoidance, sexual disgust concerns undesirable or costly sexual situations, and moral disgust concerns violations such as dishonesty and exploitation. The separate domains allowed parameter effects on different forms of disgust to be distinguished.
-
-The \textit{Toronto Empathy Questionnaire (TEQ)} and Comprehensive \textit{Dark-Factor of Personality (D-factor)} provided broader measures outside the direct cube mapping. The TEQ measures affective empathy, including emotional responsiveness, compassion and sensitivity to others [citeneeded]. The D-factor measures a general tendency towards self-serving and antagonistic behaviour, including traits such as callousness, entitlement, deceitfulness and vindictiveness [citeneeded]. These instruments were included during the initial evaluation to determine whether parameter modulation produced broader prosocial or antagonistic changes.
-
-Together, the ANPS-S, GASP, IUS-S and TDDS provided measures associated with the eight emotion vertices of the Lövheim cube. The TEQ and D-factor provided broader measures of empathy and antagonistic behaviour. These mappings were treated as operational associations for testing the proposed framework rather than as established psychological or biological equivalences.
-
-The instruments were developed and validated for human respondents. Their use in this investigation therefore measures the model's generated response patterns under a human psychometric scoring framework. The resulting scores must not be interpreted as evidence that the model possesses human emotions, personality traits or psychological states.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\subsection{LLM Inference Parameters}
-
-Token generation in LLMs is governed by inference parameters that shape the probability distribution at each step. Initial exploratory work evaluated the Temperature, Top-$K$, and Repetition penalty (TKR) grouping. Temperature scales the logits to globally sharpen or flatten the distribution, Top-$K$ restricts sampling to the $K$ most likely tokens, and repetition penalty penalises tokens that have already appeared in the context window. 
-
-A second parameter grouping, denoted PMR, combined Top-$P$, Min-$P$ and repetition penalty. Top-$P$ applies nucleus sampling, while Min-$P$ excludes tokens below a probability threshold relative to the most likely token. The TKR and PMR groupings therefore provided different methods of modifying the candidate-token distribution.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% % 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-
-\section{EXPERIMENTAL METHODOLOGY}
-\label{sec:methodology}
-
-The investigation measured the effect of inference parameter modulation on LLM psychometric response profiles. Six psychometric surveys were initially evaluated, after which four were selected for the TKR and PMR grid searches. The responses were scored using the procedures of the corresponding instruments and compared across parameter configurations and with published human normative data. Selected configurations were also tested using conversational prompts.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Psychometric Evaluation}
-\label{subsec:psychometric_evaluation}
-
-The surveys were administered to the \textit{Nemotron 3.5 Lightning 30B-A3B} reasoning model through the Fireworks API. Each request used a fixed system prompt and required one Likert-scale
-response in JSON format. The prompt requested a behavioural equivalent of each
-survey statement to prevent non-scorable responses concerning the model's lack
-of human emotions or experiences. The prompt structure, survey wording and
-output format remained fixed across all parameter configurations.
-
-A maximum response length of 1400 tokens and a reasoning budget of 1024 tokens were specified to constrain excessive generation. Multi-item requests did not reliably produce valid JSON within the available token limits. Each survey item was therefore submitted as a separate API request. This improved output consistency but removed context between successive questions. 
-
-Failed or invalid requests were repeated up to five times. Only responses containing a correctly formatted Likert-scale value were retained.
-
-Responses were scored according to the published procedure for each instrument, including reverse scoring where required. ANPS-S responses were combined into SEEKING, PLAYFULNESS, CARING, ANGER, FEAR and SADNESS subscales; GASP responses into guilt evaluation, guilt repair, shame self-evaluation and shame withdrawal; IUS-S responses into prospective and inhibitory anxiety; and TDDS responses into pathogen, sexual and moral disgust. The pipeline targeted 30 successful completions for each parameter configuration. 
-
-The resulting scores were summarised using the sample mean, variance, standard deviation and 95\% confidence interval calculated using Student's $t$-distribution. Published human normative data provided a reference for interpreting the generated response profiles.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Parameter Configurations}
-\label{subsec:parameter_configurations}
-
-A baseline response profile was first obtained using the model's default
-inference settings. Two three-parameter grid searches were then performed. The
-TKR grid varied temperature, Top-$K$ and repetition penalty. The PMR grid varied
-Top-$P$, Min-$P$ and repetition penalty. The
-parameter values are shown in Table~\ref{tab:parameter_values}.
-
-\begin{table}[htb] 
-\caption{Inference parameter values used in the grid searches.} 
-\label{tab:parameter_values} 
-\centering 
-\begin{tabular}{lccc} 
-\hline \textbf{Parameter} & \textbf{Low} & \textbf{Mid} & \textbf{High} \\ \hline Temperature & 0.30 & 0.50 & 0.70 \\ Top-$K$ & 20 & 50 & 80 \\ \hline Repetition penalty & 0.90 & 1.10 & 1.30 \\ \hline Top-$P$ & 0.70 & 0.825 & 0.95 \\ Min-$P$ & 0.01 & 0.055 & 0.10 \\ \hline 
-\end{tabular} 
-\end{table}
-
-Each grid contained 27 parameter configurations. All other experimental conditions, including the model, prompts, token limits, output format and
-scoring procedures, remained fixed. This allowed differences in the response profiles to be examined in relation to the varied inference parameters.
-
-A further ANPS-S experiment examined interactions between the TKR and PMR parameter sets. Temperature was fixed at 0.3, while Top-$K$, Top-$P$, Min-$P$ and repetition penalty were varied simultaneously at their selected low and high values. This produced 16 configurations. The same prompts, scoring procedure and number of successful completions were used for each configuration.
-
-The D70 and TEQ were evaluated at extreme parameter values during the initial survey assessment. These instruments provided broader measures of antagonistic traits and empathy but contributed limited additional information to the proposed cube mapping. Their length also increased the required number of API requests. The subsequent grid searches therefore focused on the ANPS-S, GASP, IUS-S and TDDS.
-
-The survey scores were compared with the baseline results to determine the magnitude and direction of parameter-induced changes. The combined results were also analysed using Pearson and Spearman correlation, ANOVA, PCA and t-SNE to identify parameter effects and patterns across the psychometric measures.
-
-Selected parameter configurations were subsequently applied to regular and antagonistic open-ended conversational prompts. The prompts remained fixed across configurations. The responses were scored by \textit{Claude Sonnet 5.5} for valence, arousal, warmth, assertiveness, creativity, uncertainty and textual repetition. The resulting scores were analysed using the same statistical methods and compared with the corresponding psychometric profiles.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-\section{RESULTS AND ANALYSIS}
-\label{sec:results}
-
-Inference parameter modulation produced measurable changes in the psychometric and conversational response profiles. However, the results did not establish a direct mapping between the inference parameters and the Lövheim cube. Repetition penalty produced the strongest and most consistent
-effects, while the remaining parameters produced comparatively small changes.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\subsection{Psychometric Response Profiles} \label{subsec:psychometric_results} The default response profile was compared with published human normative data. Table~\ref{tab:baseline_comparison} presents the largest differences and the subscales on which the model was closest to the human reference values. 
-
-\begin{table}[htb] \caption{Comparison of default LLM scores with human normative values.} \label{tab:baseline_comparison} \centering \begin{tabular}{lcc} \hline \textbf{Subscale} & \textbf{LLM} & \textbf{Human} \\ \hline ANPS-S anger & 2.27 & 7.18 \\ ANPS-S fear & 3.57 & 7.43 \\ TDDS-21 moral disgust & 1.50 & 3.70 \\ GASP-16 negative self-evaluation & 2.69 & 5.62 \\ IUS-S prospective anxiety & 18.48 & 16.68 \\ \hline ANPS-S caring & 12.37 & 12.22 \\ ANPS-S playfulness & 12.17 & 12.48 \\ TEQ overall empathy & 46.03 & 46.95 \\ \hline \end{tabular} \end{table} 
-
-The largest differences were lower model scores for anger, fear, moral disgust and negative self-evaluation. Prospective anxiety was higher than the human reference value, while caring, playfulness and overall empathy were comparatively close. These comparisons describe generated response patterns and do not imply that the model possesses the corresponding human psychological traits. The D70 and TEQ extreme-value results did not provide additional information for evaluating the proposed mapping to the Lövheim cube. The grid analysis therefore focused on the ANPS-S, GASP, IUS-S and TDDS.
-
-\subsection{Inference Parameter Effects}
-\label{subsec:parameter_results}
-
-ANOVA identified repetition penalty as the dominant parameter in both grid searches. Table~\ref{tab:combined_domain_effects} compares the median effect
-size of each parameter across the psychometric and conversational outcomes.
-
-\begin{table}[htb] \caption{Median ANOVA effect sizes across evaluation domains.} \label{tab:combined_domain_effects} \centering \begin{tabular}{lcc} \hline \textbf{Parameter} & \textbf{Survey} & \textbf{Conversation} \\ \hline \multicolumn{3}{l}{\textit{TKR grid}} \\ Temperature & 0.004 & 0.004 \\ Top-$K$ & 0.002 & 0.003 \\ Repetition penalty & 0.197 & 0.344 \\ \hline \multicolumn{3}{l}{\textit{PMR grid}} \\ Top-$P$ & 0.006 & 0.006 \\ Min-$P$ & 0.005 & 0.016 \\ Repetition penalty & 0.174 & 0.127 \\ \hline \end{tabular} \end{table}
-
-Repetition penalty had a substantially larger median effect size than the other parameters in both grids. Temperature, Top-$K$, Top-$P$ and Min-$P$ explained comparatively little of the observed variation.
-
-The largest psychometric effects associated with repetition penalty are shown in Table~\ref{tab:survey_anova_effects}. Only the strongest effects are included in the main paper, with the complete results provided in Appendix~\ref{app:extra_data}.
-
-\begin{table}[htb]
-    \caption{Strongest psychometric effects of repetition penalty.}
-    \label{tab:survey_anova_effects}
-    \centering
-    \begin{tabular}{llc}
-        \hline
-        \textbf{Grid} & \textbf{Outcome} &
-        \textbf{$\boldsymbol{\eta_p^2}$} \\
-        \hline
-        TKR & ANPS-S anger            & 0.517 \\
-            & TDDS-21 overall         & 0.405 \\
-            & ANPS-S fear             & 0.316 \\
-        \hline
-        PMR & ANPS-S anger            & 0.556 \\
-            & GASP-16 shame withdrawal & 0.412 \\
-            & ANPS-S fear             & 0.374 \\
-            & TDDS-21 pathogen disgust & 0.322 \\
-        \hline
-    \end{tabular}
-\end{table}
-
-The reported effects were statistically significant at $p < 0.001$ after
-Benjamini--Hochberg false discovery rate (BH-FDR) correction. Min-$P$ also produced
-significant effects on ANPS-S anger ($\eta_p^2 = 0.016$) and TDDS-21 moral
-disgust ($\eta_p^2 = 0.020$), although these effect sizes were comparatively
-small.
-
-Pearson correlations supported the ANOVA results. The main relationships
-between repetition penalty and the psychometric outcomes are summarised in
-Table~\ref{tab:survey_correlations}.
-
-\begin{table}[htb]
-    \caption{Pearson correlations between repetition penalty and selected
-    psychometric outcomes.}
-    \label{tab:survey_correlations}
-    \centering
-    \begin{tabular}{lcc}
-        \hline
-        \textbf{Outcome} & \textbf{TKR $\boldsymbol{r}$} &
-        \textbf{PMR $\boldsymbol{r}$} \\
-        \hline
-        Anger           &  0.62 &  0.62 \\
-        Shame           &  0.56 &  0.61 \\
-        Fear            &  0.54 &  0.59 \\
-        Overall disgust & -0.59 & -0.46 \\
-        Joy             & -0.30 & -0.36 \\
-        \hline
-    \end{tabular}
-\end{table}
-
-Repetition penalty was positively associated with anger, shame and fear, and
-negatively associated with disgust and joy. All reported correlations were
-significant at $p < 0.001$ after BH-FDR correction. The remaining parameters showed weak or negligible correlations.
-The largest reported correlations for Top-$P$ and Min-$P$ were $r = 0.08$ and
-$r = -0.11$, respectively, while temperature and Top-$K$ showed negligible
-relationships across the measured outcomes.
-
-Spearman rank correlations showed strong agreement with the Pearson results
-and did not change the overall interpretation. Repetition penalty remained the
-dominant parameter, while the remaining parameters showed comparatively weak
-associations. Detailed Spearman results are provided in
-Appendix~\ref{app:extra_data}.
-
-The agreement between the ANOVA, Pearson and Spearman results provides
-consistent evidence that repetition penalty was the main source of variation
-in the psychometric profiles. However, its effects did not correspond
-consistently with one axis or vertex of the Lövheim cube. A direct
-parameter-to-emotion mapping could therefore not be established.
-
-The combined-parameter ANPS-S experiment did not produce clearer response
-patterns than the separate TKR and PMR grids. Since Top-$K$, Top-$P$, Min-$P$
-and repetition penalty were varied simultaneously, their individual
-contributions were difficult to isolate. [INSERT THE OBSERVED EVIDENCE, SUCH AS
-OVERLAPPING CONFIDENCE INTERVALS, SMALL SCORE DIFFERENCES OR INCONSISTENT
-SUBSCALE CHANGES.]
-
-PCA and t-SNE provided supporting visualisations of the overall response
-patterns. The PCA used 810 individual observations per grid, with the survey
-subscales serving as the analysed variables. The first two principal
-components in the PMR analysis explained 38.0\% and 15.3\% of the variance,
-respectively. In the TKR analysis, they explained 37.0\% and 15.4\%,
-respectively. These exploratory results are presented in
-Appendix~\ref{app:extra_data}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Conversational Response Analysis}
-\label{subsec:conversation_results}
-
-The conversational outputs included responses to regular and antagonistic open-ended prompts. The statistical analysis presented in this section used the regular open-ended conversations. The antagonistic conversations were generated as an additional exploratory test but were not included in the reported statistical analysis. Each response was scored for valence, arousal, warmth, assertiveness, creativity, uncertainty and textual repetition. The same evaluation prompt and scoring rubric were used throughout.
-
-As shown in Table~\ref{tab:combined_domain_effects}, ANOVA again identified
-repetition penalty as the dominant parameter. Its median effect size was
-larger in the TKR conversational results than in the PMR results. The
-corresponding Pearson correlations are shown in
-Table~\ref{tab:conversation_correlations}.
-
-\begin{table}[htb]
-    \caption{Pearson correlations between repetition penalty and selected
-    conversational measures.}
-    \label{tab:conversation_correlations}
-    \centering
-    \begin{tabular}{lcc}
-        \hline
-        \textbf{Measure} & \textbf{TKR $\boldsymbol{r}$} &
-        \textbf{PMR $\boldsymbol{r}$} \\
-        \hline
-        Creativity         &  0.90 &  0.87 \\
-        Arousal            &  0.78 &  0.76 \\
-        Valence            &  0.38 &  0.39 \\
-        Warmth             & -0.68 & -0.78 \\
-        Textual repetition & -0.63 & -0.70 \\
-        \hline
-    \end{tabular}
-\end{table}
-
-Higher repetition penalty was associated with greater creativity, arousal and
-valence, and with lower warmth and textual repetition. All reported
-correlations were significant at $p < 0.001$ after BH-FDR.
-
-Spearman rank correlations supported the Pearson results and did not change
-the overall interpretation. The conversational boxplots illustrated changes
-in the distributions of valence, arousal, warmth, assertiveness and creativity
-as repetition penalty increased. The ANOVA results provided the corresponding
-statistical evidence for these effects. In contrast, the distributions
-associated with temperature, Top-$K$, Top-$P$ and Min-$P$ remained comparatively
-close to the baseline values.
-
-The psychometric and conversational analyses therefore produced a consistent
-overall result. Both identified repetition penalty as the dominant inference
-parameter. Increased repetition penalty was associated with a more aroused,
-higher-valence and less warm conversational profile, alongside higher anger,
-fear and shame survey scores. These changes demonstrate modulation of the
-model's generated response behaviour, but do not establish model emotion or a
-direct mapping to the Lövheim cube.
-
-\section{CRITICAL EVALUATION AND FUTURE WORK}
-\label{sec:critical_evaluation}
-
-The investigation demonstrated that inference parameters can alter psychometric and conversational response patterns, but it did not establish the proposed direct parameter-to-emotion mapping. The findings should therefore be treated as preliminary evidence for behavioural modulation rather than evidence of model emotion.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Experimental Limitations}
-\label{subsec:limitations}
-
-Only the \textit{Nemotron 3.5 Lightning 30B-A3B} model hosted through Fireworks AI was tested. The results may depend on the specific model architecture, provider-side implementation, or supported sampling controls and may therefore not generalise to other LLMs or hosting environments.
-
-The default API settings provided a reference profile but were not validated as an emotionally neutral configuration. A future experiment should define and validate a neutral reference baseline before calculating parameter-induced shifts. Furthermore, while submitting each survey item through an independent API call improved JSON output consistency, it removed conversational context between successive questions, representing independent item-level responses rather than a continuous survey interaction.
-
-The selected surveys were developed for humans. Their use with an LLM measures generated response patterns rather than genuine emotion or personality. Similarly, Claude provided a consistent method of scoring the conversational responses, but the results may contain evaluator-model bias and should not be treated as objective ground truth.
-
-Excluding D70 and TEQ reduced API usage and focused the grid searches on instruments more directly related to the Lövheim cube, but this reduced the breadth of the final psychometric assessment. The BH-FDR correction reduced the risk of false-positive findings across the large number of statistical tests. Nevertheless, the number of survey subscales, conversational measures and parameter comparisons should be considered when interpreting the results.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Recommendations for Future Work}
-\label{subsec:future_work}
-
-Future investigations should repeat the experiment using other LLM architectures and local hosting platforms to determine generalisability. A targeted optimisation or interaction design, focused specifically around repetition penalty, should replace a complete multi-parameter search to reduce API overhead while retaining the ability to examine targeted parameter interactions.
-
-Context-preserving survey designs should be investigated to retain conversational continuity between items while still enforcing machine-readable outputs, potentially through constrained generation frameworks. The conversational scoring must also be validated using multiple independent evaluator models and, subject to ethical clearance, human evaluators. Ultimately, future work should test whether a data-driven affective representation fits the observed parameter effects better than a direct mapping to the Lövheim cube.
-
-\section{CONCLUSION}
-
-% BLUE BOOK 4.2.4 & CHECKLIST 3:
-% - Do not replicate the abstract.
-% - Summarise the main findings with hindsight and link directly back to the 
-%   initial problem statement/objectives in the Introduction.
-% - State the final verdict on how PMR/TKR modulation affects LLM psychometric 
-%   profiles and summarise the key path forward.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-\balance
-
-\section*{ACKNOWLEDGEMENT}
-
-% BLUE BOOK 8.5 & TEMPLATE: Acknowledge your project supervisor and acknowledge 
-% Zoë's collaborative contributions to the shared project.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% BLUE BOOK 5.2.1 & GUIDELINE 3: Numerical IEEE style in order of citation.
-% Remember you can also cite your own or Zoë's appendices here if needed (Guideline 3).
-%\nocite{*}
-\bibliographystyle{witseie}
-\bibliography{sample}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% APPENDICES
-%
-% CBO SECTION 11.2 (Page 9) & PAPER GUIDELINES (1, 2, 3, 7):
-% The main paper above MUST be 4 to 6 pages (including references).
-% Your submission requires the following appendices:
-%   - Appendix A: Reflection on Working as a Group (Max 2 pages) [MANDATORY FIRST APPENDIX]
-%   - Appendix B: Original, Unmarked Project Plan Report [MANDATORY SECOND APPENDIX]
-%   - Appendix C+: Additional Appendices as required (e.g., extended plots, 
-%     HTML normative comparison tables, detailed survey stats, repo links).
-%
-% NOTE: If you compile Appendices in a separate document or merge PDFs later, 
-% you can comment out the \appendix section below.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\clearpage
-\onecolumn
-\appendix
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{REFLECTION ON GROUP WORK}
-\label{app:group_reflection}
-
-% CBO 11.2 & GUIDELINE 7: Maximum 2 pages.
-% Save all discussion of who did what ("J vs Z") for this appendix!
-% Recommended structure for this 2-page reflection:
-%   1. Group Dynamics and Workflow (how you split tasks (used Trello throughout to plan tasks), GitHub collaboration, 
-%      weekly meetings).
-%   2. Summary Table of Individual vs Joint Contributions (J vs Z breakdown).
-%   3. Chronological Timeline of Tasks
-%   4. Reflection on Challenges and Teamwork lessons learned. (we worked pretty well together in a group, communicated daily, spilt tasks pretty evenly, met nearly daily on weekdays throughout the 8 weeks, met with supervisor every week, worked together in lab with other 2 groups and it was amiable. Cohort group work was fine.)
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{ORIGINAL PROJECT PLAN REPORT}
-\label{app:project_plan}
-
-% CBO 11.2: "The second appendix must be the original, unmarked Project plan report."
-% (Usually inserted by merging the original Project Plan PDF here, or using 
-% \includepdf[pages=-]{project_plan.pdf} with \usepackage{pdfpages}).
-
-\section{COHORT MEETING MINUTES}
-\label{app:meeting_minutes}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{ADDITIONAL EXPERIMENTAL DATA AND VISUALISATIONS}
-\label{app:extra_data}
-
-% CBO 11.2 & BLUE BOOK 9.2: Optional additional appendices for material too 
-% large for the 4-6 page paper (e.g., full grid-search plots across all 6 surveys, 
-% HTML normative comparison tables, sample conversational transcripts, etc.).
-% Remember: Every appendix included must be referred to at least once in the main text!
-
-%% Add flow diagram here, but also refer to it!
-
-\end{document}
-
-" vim: ts=4
-" vim: tw=78
-" vim: autoindent
-" vim: shiftwidth=4
+/* =====================================================================
+   LaTeX (.tex): keep the prose, drop comments, maths, figures, code and markup
+   ===================================================================== */
+const TEX_DROP = {
+  label:1, ref:1, eqref:1, pageref:1, autoref:1, cref:1, Cref:1, nameref:1, cite:1, citep:1, citet:1, citeauthor:1, citeyear:1, nocite:1,
+  footnote:1, footnotetext:1, footnotemark:0, thanks:1, usepackage:1, RequirePackage:1, documentclass:1, bibliographystyle:1, bibliography:1,
+  addbibresource:1, input:1, include:1, includegraphics:1, includepdf:1, vspace:1, hspace:1, setlength:2, addtolength:2, setcounter:2,
+  addtocounter:2, renewcommand:2, newcommand:2, providecommand:2, DeclareMathOperator:2, newenvironment:3, renewenvironment:3, newtheorem:2,
+  pagestyle:1, thispagestyle:1, pagenumbering:1, geometry:1, hypersetup:1, graphicspath:1, url:1, index:1, phantom:1, hphantom:1, vphantom:1,
+  color:1, textcolor:1, colorbox:1, definecolor:3, lstset:1, tikzset:1, bibitem:1, title:1, author:1, date:1, href:1, hyperref:1, fontsize:2,
+  setmainfont:1, graphicspath2:1, captionsetup:1, newcounter:1, theoremstyle:1, vskip:0, hskip:0
+};
+const TEX_DROP_ENV = new Set(['equation','align','alignat','gather','multline','eqnarray','displaymath','math','flalign','split','array','cases',
+  'matrix','pmatrix','bmatrix','vmatrix','verbatim','lstlisting','minted','tikzpicture','tabular','tabularx','tabular*','longtable','algorithm','algorithmic',
+  'algorithm2e','comment','thebibliography','filecontents','pgfpicture','picture','axis','subequations','tcolorbox2']);
+const TEX_ENV_ARGS = { minipage:1, multicols:1, adjustbox:1, tabbing:0 };
+const TEX_LEAD = { theorem:'Theorem', lemma:'Lemma', proposition:'Proposition', corollary:'Corollary', definition:'Definition', remark:'Remark', example:'Example', proof:'Proof', claim:'Claim', conjecture:'Conjecture', exercise:'Exercise', note:'Note' };
+const TEX_SYM = { ldots:'…', dots:'…', textellipsis:'…', ss:'ß', o:'ø', O:'Ø', ae:'æ', AE:'Æ', oe:'œ', OE:'Œ', aa:'å', AA:'Å', l:'ł', L:'Ł', i:'i', j:'j', S:'§', P:'¶',
+  dag:'†', ddag:'‡', copyright:'©', pounds:'£', euro:'€', textbackslash:'\\', par:'\n\n', newline:' ', linebreak:' ', and:', ', textendash:'–', textemdash:'—',
+  textquoteleft:'‘', textquoteright:'’', textquotedblleft:'“', textquotedblright:'”', LaTeX:'LaTeX', TeX:'TeX', today:'', qed:'', qedsymbol:'', square:'', blacksquare:'' };
+const TEX_ACC = { "'":'́', '`':'̀', '^':'̂', '"':'̈', '~':'̃', '=':'̄', '.':'̇' };
+const TEX_ACC_L = { c:'̧', v:'̌', u:'̆', H:'̋', k:'̨', r:'̊' };
+const TEX_GREEK = { alpha:'α', beta:'β', gamma:'γ', delta:'δ', epsilon:'ε', varepsilon:'ε', zeta:'ζ', eta:'η', theta:'θ', iota:'ι', kappa:'κ', lambda:'λ', mu:'μ', nu:'ν', xi:'ξ', pi:'π', rho:'ρ', sigma:'σ', tau:'τ', phi:'φ', varphi:'φ', chi:'χ', psi:'ψ', omega:'ω', Gamma:'Γ', Delta:'Δ', Theta:'Θ', Lambda:'Λ', Pi:'Π', Sigma:'Σ', Phi:'Φ', Psi:'Ψ', Omega:'Ω' };
+const TEX_ESC = { '{':'', '}':'', '%':'', '$':'', '&':'', '#':'', '_':'' };
+const TEX_UNESC = { '':'{', '':'}', '':'%', '':'$', '':'&', '':'#', '':'_' };
+
+function texGroup(s, i){                       // s[i] === '{'; returns { text, end } with balanced braces
+  let d = 0;
+  for (let k = i; k < s.length; k++) {
+    const c = s[k];
+    if (c === '\\') { k++; continue; }
+    if (c === '{') d++;
+    else if (c === '}' && --d === 0) return { text: s.slice(i + 1, k), end: k + 1 };
+  }
+  return { text: s.slice(i + 1), end: s.length };
+}
+function texSkipArgs(s, j, count){             // skip [optional] args and `count` {required} groups
+  let got = 0;
+  for (;;) {
+    let k = j; while (k < s.length && /[ \t]/.test(s[k])) k++;
+    if (s[k] === '[') { const e = s.indexOf(']', k); if (e < 0) break; j = e + 1; continue; }
+    if (got < count && s[k] === '{') { j = texGroup(s, k).end; got++; continue; }
+    break;
+  }
+  return j;
+}
+function texMath(body){                        // short inline maths such as $x$ or $\alpha$ stay readable; the rest is dropped
+  const t = body.replace(/\\([A-Za-z]+)/g, (m, n) => TEX_GREEK[n] || m).replace(/[{}\s]/g, '');
+  return /^[\p{L}\p{N}]{1,3}$/u.test(t) ? t : '';
+}
+function texConv(s, st){
+  let out = '', i = 0; const n = s.length;
+  while (i < n) {
+    const c = s[i];
+    if (c === '$') {
+      const dbl = s[i + 1] === '$', close = dbl ? '$$' : '$', from = i + close.length;
+      const lim = dbl ? Math.min(n, from + 4000) : (() => { const m = /\n[ \t]*\n/.exec(s.slice(from)); return m ? from + m.index : n; })();
+      let k = from; while (k < lim && !(s.startsWith(close, k) && s[k - 1] !== '\\')) k++;
+      if (k >= lim) { out += c; i++; continue; }      // a lone $ (a price, say) is just a $
+      out += dbl ? ' ' : ' ' + texMath(s.slice(from, k)) + ' ';
+      i = k + close.length; continue;
+    }
+    if (c === '~') { out += ' '; i++; continue; }
+    if (c === '{' || c === '}') { i++; continue; }
+    if (c === '&') { out += ' '; i++; continue; }
+    if (c !== '\\') { out += c; i++; continue; }
+    const nx = s[i + 1];
+    if (nx === undefined) break;
+    if (!/[A-Za-z@]/.test(nx)) {
+      if (nx === '\\') { i = texSkipArgs(s, i + 2, 0); if (s[i] === '*') i++; out += ' '; continue; }
+      if (TEX_ESC[nx]) { out += TEX_ESC[nx]; i += 2; continue; }
+      if (nx === '[') { const e = s.indexOf('\\]', i + 2); i = e < 0 ? n : e + 2; out += ' '; continue; }
+      if (nx === '(') { const e = s.indexOf('\\)', i + 2); const k = e < 0 ? n : e; out += ' ' + texMath(s.slice(i + 2, k)) + ' '; i = e < 0 ? n : e + 2; continue; }
+      if (TEX_ACC[nx]) { const m = /^\{?\\?([A-Za-z])\}?/.exec(s.slice(i + 2, i + 9)); if (m) { out += m[1] + TEX_ACC[nx]; i += 2 + m[0].length; continue; } }
+      if (nx === '-') { i += 2; continue; }
+      out += ' '; i += 2; continue;
+    }
+    let j = i + 1; while (j < n && /[A-Za-z@]/.test(s[j])) j++;
+    const name = s.slice(i + 1, j); if (s[j] === '*') j++;
+    if (TEX_ACC_L[name]) { const m = /^\s*\{?([A-Za-z])\}?/.exec(s.slice(j, j + 8)); if (m) { out += m[1] + TEX_ACC_L[name]; i = j + m[0].length; continue; } }
+    if (name === 'begin' || name === 'end') {
+      let k = j; while (k < n && /\s/.test(s[k])) k++;
+      if (s[k] !== '{') { i = j; continue; }
+      const g = texGroup(s, k), env = g.text.trim(), base = env.replace(/\*$/, '');
+      j = g.end;
+      if (name === 'end') { out += '\n\n'; i = j; continue; }
+      if (TEX_DROP_ENV.has(env) || TEX_DROP_ENV.has(base)) {
+        const e = s.indexOf('\\end{' + env + '}', j);
+        i = e < 0 ? n : e + env.length + 6; out += ' '; continue;
+      }
+      if (base === 'figure' || base === 'table' || base === 'wrapfigure' || base === 'sidewaysfigure') {
+        const e = s.indexOf('\\end{' + env + '}', j), inner = s.slice(j, e < 0 ? n : e);
+        const re = /\\caption\*?\s*(?:\[[^\]]*\])?\s*\{/g; let m;
+        while ((m = re.exec(inner))) out += '\n\n' + texConv(texGroup(inner, m.index + m[0].length - 1).text, st) + '\n\n';
+        i = e < 0 ? n : e + env.length + 6; continue;
+      }
+      if (base === 'abstract') { out += '\n\n@@H2@@Abstract\n\n'; i = j; continue; }
+      if (TEX_LEAD[base]) {
+        let opt = ''; const m = /^\s*\[([^\]]*)\]/.exec(s.slice(j, j + 200));
+        if (m) { opt = texConv(m[1], st).trim(); j += m[0].length; }
+        out += '\n\n' + TEX_LEAD[base] + (opt ? ' (' + opt + ')' : '') + '. '; i = j; continue;
+      }
+      i = texSkipArgs(s, j, TEX_ENV_ARGS[base] || 0); out += '\n\n'; continue;
+    }
+    if (name === 'item') {
+      let k = j; while (k < n && /[ \t]/.test(s[k])) k++;
+      let term = '';
+      if (s[k] === '[') { const e = s.indexOf(']', k); if (e > 0) { term = texConv(s.slice(k + 1, e), st).trim().replace(/[:.]+$/, ''); j = e + 1; } }
+      out += '\n\n' + (term ? term + ': ' : ''); i = j; continue;
+    }
+    const SEC = { part:1, chapter:1, section:2, subsection:3, subsubsection:4, paragraph:5, subparagraph:5 };
+    if (SEC[name]) {
+      let k = texSkipArgs(s, j, 0); while (k < n && /\s/.test(s[k])) k++;
+      if (s[k] === '{') {
+        const g = texGroup(s, k), t = texConv(g.text, st).replace(/\s+/g, ' ').trim();
+        const lvl = SEC[name];
+        if (lvl === 5) out += ' ' + t + '. ';
+        else out += '\n\n@@H' + ((name === 'part' || name === 'chapter') ? 1 : st.hasChapter ? 3 : lvl - 1) + '@@' + t + '\n\n';
+        i = g.end; continue;
+      }
+    }
+    if (name === 'verb') { const d = s[j]; const e = s.indexOf(d, j + 1); i = e < 0 ? n : e + 1; continue; }
+    if (Object.prototype.hasOwnProperty.call(TEX_DROP, name)) { i = texSkipArgs(s, j, TEX_DROP[name]); continue; }
+    if (Object.prototype.hasOwnProperty.call(TEX_SYM, name)) { out += TEX_SYM[name]; i = j; continue; }
+    i = j;                                         // any other command: drop its name, keep the text inside its braces
+  }
+  return out;
+}
+function looksLikeTex(raw){
+  if (/\\documentclass|\\begin\{document\}/.test(raw)) return true;
+  const cmds = (raw.match(/\\[A-Za-z]{2,}/g) || []).length;
+  return cmds >= 3 && /\\(begin|section|subsection|chapter|textbf|textit|emph|cite|item|label|ref|usepackage|frac|maketitle)\b/.test(raw);
+}
+function texToText(src){
+  let s = String(src).replace(/\r\n?/g, '\n');
+  s = s.replace(/^[ \t]*%.*(?:\n|$)/gm, '').replace(/(^|[^\\])%.*$/gm, '$1');            // comments
+  s = s.replace(/\\begin\{comment\}[\s\S]*?\\end\{comment\}/g, '');
+  const st = { hasChapter: /\\chapter\b/.test(s) };
+  const grab = name => {
+    const m = new RegExp('\\\\' + name + '\\s*(?:\\[[^\\]]*\\])?\\s*\\{').exec(s);
+    return m ? texGroup(s, m.index + m[0].length - 1).text : '';
+  };
+  const tidy = t => t.replace(/[-]/g, c => TEX_UNESC[c]).replace(/\s+/g, ' ').replace(/\s+([,.;:])/g, '$1').replace(/^[,\s]+|[,\s]+$/g, '').trim();
+  let title = tidy(texConv(grab('title').replace(/\\\\/g, ' '), st));
+  let author = tidy(texConv(grab('author').replace(/\\\\/g, ', ').replace(/\\thanks\{[^}]*\}/g, ''), st)).replace(/(,\s*){2,}/g, ', ');
+  if (title.length > 90) title = title.slice(0, 90).replace(/\s+\S*$/, '') + '…';
+  if (author.length > 120) author = author.slice(0, 120).replace(/[,\s]+\S*$/, '') + ' et al.';
+  const bd = s.search(/\\begin\{document\}/);
+  if (bd >= 0) { s = s.slice(bd + 16); const e = s.search(/\\end\{document\}/); if (e >= 0) s = s.slice(0, e); }
+  let text = texConv(s, st);
+  text = text.replace(/—|---/g, '—').replace(/--/g, '–').replace(/``/g, '“').replace(/''/g, '”').replace(/`/g, '‘')
+    .replace(/[-]/g, c => TEX_UNESC[c])
+    .replace(/([^.])\.\s*\.(?!\.)/g, '$1.')
+    .replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n');
+  return { text: text.normalize('NFC').trim(), title: title.normalize('NFC'), author: author.normalize('NFC') };
+}
+
+const CHAPTER_RE = /^(chapter|part|book|prologue|epilogue|preface|introduction)\b.{0,60}$/i;
+
+function ingestText(raw, { title = 'Pasted text', md = false, tex = false } = {}){
+  const b = Builder();
+  let text = raw.replace(/\r\n?/g, '\n');
+  if (md) {
+    text = text.replace(/^(#{1,6})[ \t]+(.+?)[ \t#]*$/gm, (m, h, t) => `\n\n@@H${h.length}@@${t}\n\n`);
+    text = text.replace(/\n(?=[ \t]*([-*+]|\d+[.)])[ \t])/g, '\n\n');
+  }
+  for (let block of text.split(/\n[ \t]*\n/)) {
+    block = block.trim();
+    if (!block) continue;
+    const h = (md || tex) && block.match(/^@@H(\d)@@([\s\S]*)$/);
+    if (h) {
+      const t = (tex ? h[2] : stripMd(h[2])).replace(/\s+/g, ' ').trim();
+      if (+h[1] <= 2) b.chapter(t.slice(0, 80) || 'Section');
+      b.addPara(t);
+      continue;
+    }
+    if (md) block = stripMd(block);
+    const flat = block.replace(/\s+/g, ' ');
+    const numHead = /^(\d{1,3}|[IVXLC]{1,7})\.?$/.test(flat);
+    if (!md && !tex && !/\n/.test(block) && ((flat.length < 70 && CHAPTER_RE.test(flat)) || numHead)) b.chapter(numHead ? 'Chapter ' + flat.replace(/\.$/, '') : flat);
+    b.addPara(flat);
+  }
+  if (!b.words.length) throw new Error('No readable text found.');
+  return b.finish(title);
+}
+
+/* ---------- EPUB ---------- */
+const SKIP_TITLE_RE = /^(copyright|table of contents|contents|cover|title page|half[- ]?title|also by|colophon|imprint|license|legal)\b/i;
+
+function flattenToc(items, out = []){
+  for (const it of items || []) { out.push(it); if (it.subitems) flattenToc(it.subitems, out); }
+  return out;
+}
+const normHref = h => { try { return decodeURIComponent(String(h).split('#')[0]).replace(/^\.?\//, ''); } catch { return String(h).split('#')[0]; } };
+
+function extractParagraphs(root){
+  const body = root.querySelector('body') || root;
+  body.querySelectorAll('script,style,nav,svg,noscript,aside,[hidden],a.noteref,sup a').forEach(n => n.remove());
+  // Walk the page: inline text accumulates into one paragraph, block-level tags end it.
+  // Line breaks become spaces, so neighbouring words never fuse together.
+  // Also records where each id/anchor sits (paragraph index) so the table of contents can point inside a file.
+  const BLOCK = /^(p|div|li|tr|td|th|h[1-6]|blockquote|pre|dt|dd|figcaption|figure|section|article|header|footer|main|center|ul|ol|dl|table|tbody|thead|body)$/i;
+  const out = [], anchors = new Map();
+  let buf = '', heading = '';
+  const flush = () => { const t = buf.replace(/\s+/g, ' ').trim(); if (t) out.push(t); buf = ''; };
+  (function walk(node){
+    for (const c of node.childNodes) {
+      if (c.nodeType === 3) { buf += c.nodeValue; continue; }
+      if (c.nodeType !== 1) continue;
+      const tag = c.localName || '';
+      if (/^(br|wbr|hr)$/i.test(tag)) { buf += ' '; continue; }
+      const isBlock = BLOCK.test(tag);
+      if (isBlock) flush();
+      const id = c.getAttribute('id') || (/^a$/i.test(tag) ? c.getAttribute('name') : '');
+      if (id && !anchors.has(id)) anchors.set(id, out.length);
+      if (!heading && /^h[1-3]$/i.test(tag)) {
+        const t = (c.textContent || '').replace(/\s+/g, ' ').trim();
+        if (t && t.length < 80) heading = t;
+      }
+      walk(c);
+      if (isBlock) flush();
+    }
+  })(body);
+  flush();
+  return { paras: out, anchors, heading };
+}
+
+/* NATIVE-EPUB-START
+   Built-in EPUB reader: no CDN needed. Uses the browser's DecompressionStream
+   (Safari 16.4+, Chrome 80+, Firefox 113+) to unzip, and DOMParser for the XML. */
+const safeDec = s => { try { return decodeURIComponent(s); } catch { return s; } };
+async function inflateRaw(bytes){
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function readZip(buf){
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let eocd = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('Not a valid EPUB (zip directory not found).');
+  const count = dv.getUint16(eocd + 10, true), cdOff = dv.getUint32(eocd + 16, true);
+  const dec = new TextDecoder('utf-8');
+  const entries = new Map();
+  let p = cdOff;
+  for (let k = 0; k < count; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    const lho = dv.getUint32(p + 42, true);
+    entries.set(dec.decode(u8.subarray(p + 46, p + 46 + nlen)), { method, csize, lho });
+    p += 46 + nlen + elen + clen;
+  }
+  return {
+    async read(name){
+      let e = entries.get(name);
+      if (!e) for (const [k, v] of entries) if (safeDec(k) === name) { e = v; break; }
+      if (!e) throw new Error('Missing file in EPUB: ' + name);
+      const nl = dv.getUint16(e.lho + 26, true), el = dv.getUint16(e.lho + 28, true);
+      const start = e.lho + 30 + nl + el;
+      const data = u8.subarray(start, start + e.csize);
+      if (e.method === 0) return data;
+      if (e.method === 8) return inflateRaw(data);
+      throw new Error('Unsupported zip compression in EPUB.');
+    },
+    async text(name){ return dec.decode(await this.read(name)); }
+  };
+}
+function resolvePath(baseFile, rel){
+  rel = safeDec(String(rel).split('#')[0]);
+  if (rel.startsWith('/')) return rel.slice(1);
+  const parts = baseFile.split('/').slice(0, -1);
+  for (const seg of rel.split('/')) { if (seg === '..') parts.pop(); else if (seg && seg !== '.') parts.push(seg); }
+  return parts.join('/');
+}
+
+async function loadEpubNative(buf, fallbackTitle){
+  const zip = await readZip(buf);
+  const xml = (s, t = 'application/xml') => new DOMParser().parseFromString(s, t);
+
+  const container = xml(await zip.text('META-INF/container.xml'));
+  const rf = container.querySelector('rootfile');
+  if (!rf) throw new Error('Not a valid EPUB (no package file).');
+  const opfPath = rf.getAttribute('full-path');
+  const opf = xml(await zip.text(opfPath));
+
+  const tEl = opf.getElementsByTagNameNS('*', 'title')[0];
+  let title = tEl ? tEl.textContent.replace(/\s+/g, ' ').trim() : '';
+  if (badTitle(title)) title = cleanFileName(fallbackTitle) || 'Untitled';
+  const author = joinAuthors(Array.from(opf.getElementsByTagNameNS('*', 'creator')).map(e => e.textContent));
+
+  const man = {};
+  opf.querySelectorAll('manifest > item').forEach(it => {
+    man[it.getAttribute('id')] = {
+      href: resolvePath(opfPath, it.getAttribute('href') || ''),
+      props: it.getAttribute('properties') || '',
+      type: it.getAttribute('media-type') || ''
+    };
+  });
+  const spine = Array.from(opf.querySelectorAll('spine > itemref'))
+    .map(r => ({ id: r.getAttribute('idref'), linear: r.getAttribute('linear') }));
+
+  // Table of contents, in reading order. Each entry: file, optional #anchor inside the file, label.
+  const toc = [];
+  const addEntry = (base, href, label) => {
+    label = (label || '').replace(/\s+/g, ' ').trim();
+    if (!label || !href) return;
+    toc.push({ path: resolvePath(base, href), frag: safeDec(String(href).split('#')[1] || ''), label });
+  };
+  try {
+    const navItem = Object.values(man).find(m => /\bnav\b/.test(m.props));
+    if (navItem) {
+      const nd = xml(await zip.text(navItem.href), 'application/xhtml+xml');
+      const navs = Array.from(nd.querySelectorAll('nav'));
+      const tn = navs.find(n => /toc/.test(n.getAttribute('epub:type') || '')) || navs[0];
+      if (tn) tn.querySelectorAll('a').forEach(a => addEntry(navItem.href, a.getAttribute('href'), a.textContent));
+    }
+    if (!toc.length) {
+      const sp = opf.querySelector('spine');
+      const ncxId = sp && sp.getAttribute('toc');
+      const ncx = (ncxId && man[ncxId]) || Object.values(man).find(m => m.type === 'application/x-dtbncx+xml');
+      if (ncx) {
+        const nd = xml(await zip.text(ncx.href));
+        nd.querySelectorAll('navPoint').forEach(np => {
+          const c = np.querySelector('content'), l = np.querySelector('navLabel > text');
+          if (c && l) addEntry(ncx.href, c.getAttribute('src'), l.textContent);
+        });
+      }
+    }
+  } catch (e) { /* the TOC is optional; headings are the fallback */ }
+  const byFile = new Map();
+  toc.forEach(e => { if (!byFile.has(e.path)) byFile.set(e.path, []); byFile.get(e.path).push(e); });
+
+  const b = Builder();
+  let n = 0;
+  for (const sp of spine) {
+    n++;
+    setStatus(`Reading section ${n} of ${spine.length}…`);
+    const m = man[sp.id];
+    if (!m || sp.linear === 'no' || /\bnav\b/.test(m.props) || !/html/.test(m.type)) continue;
+    let res;
+    try {
+      const src = await zip.text(m.href);
+      let doc = xml(src, 'application/xhtml+xml');
+      if (doc.querySelector('parsererror')) doc = xml(src, 'text/html');
+      res = extractParagraphs(doc.documentElement);
+    } catch (e) { continue; }
+    const paras = res.paras;
+    const wc = paras.reduce((a, t) => a + t.split(' ').length, 0);
+    if (wc < 8) continue;
+
+    // Where do chapters start inside this file? (paragraph index -> title)
+    const starts = new Map();
+    const entries = byFile.get(m.href) || [];
+    if (entries.length) {
+      for (const e of entries) {
+        let pi = e.frag && res.anchors.has(e.frag) ? res.anchors.get(e.frag) : 0;
+        starts.set(Math.min(pi, paras.length - 1), e.label);       // deepest/last entry wins at the same spot
+      }
+    } else if (res.heading && (wc >= 150 || !toc.length)) {
+      starts.set(0, res.heading);                                    // file missing from an incomplete TOC
+    } else if (!toc.length) {
+      starts.set(0, paras[0].length < 70 ? paras[0] : `Section ${n}`);
+    }                                                                // otherwise: continuation of the previous chapter
+
+    if (starts.size === 1) {
+      const lab = [...starts.values()][0];
+      if (SKIP_TITLE_RE.test(lab) && wc < 800) continue;             // copyright, contents, etc.
+    }
+    paras.forEach((p, i) => { if (starts.has(i)) b.chapter(starts.get(i).slice(0, 90)); b.addPara(p); });
+    await new Promise(r => setTimeout(r, 0));
+  }
+  if (!b.words.length) throw new Error('No readable text found in this EPUB.');
+  const doc = b.finish(title); doc.author = author || '';
+  return doc;
+}
+/* NATIVE-EPUB-END */
+
+async function loadEpub(buf, fallbackTitle){
+  let nativeErr = null;
+  if (typeof DecompressionStream !== 'undefined') {
+    try { return await loadEpubNative(buf, fallbackTitle); }
+    catch (e) { nativeErr = e; console.warn('Built-in EPUB reader failed, trying epub.js', e); }
+  }
+  try { return await loadEpubLib(buf, fallbackTitle); }
+  catch (e) { throw nativeErr || e; }
+}
+
+/* Fallback only: epub.js is loaded on demand from a list of CDNs, trying each in turn. */
+const LIB_SOURCES = {
+  jszip: [
+    'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+    'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'
+  ],
+  epub: [
+    'https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js',
+    'https://unpkg.com/epubjs@0.3.93/dist/epub.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.88/epub.min.js',
+    'https://cdn.jsdelivr.net/npm/epubjs@0.3.88/dist/epub.min.js'
+  ]
+};
+function loadScript(url, timeoutMs = 20000){
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    const t = setTimeout(() => { s.remove(); rej(new Error('timeout')); }, timeoutMs);
+    s.src = url; s.async = true;
+    s.onload = () => { clearTimeout(t); res(); };
+    s.onerror = () => { clearTimeout(t); s.remove(); rej(new Error('failed')); };
+    document.head.appendChild(s);
+  });
+}
+async function loadLib(key, test){
+  if (test()) return;
+  const tried = [];
+  for (const url of LIB_SOURCES[key]) {
+    try { await loadScript(url); if (test()) return; tried.push(url + ' (loaded but library missing)'); }
+    catch (e) { tried.push(url + ' (' + e.message + ')'); }
+  }
+  throw new Error('Could not download the ' + (key === 'epub' ? 'EPUB' : 'ZIP') + ' library. Tried: ' + tried.join('; ') +
+    '. If you use a content blocker or private DNS, allow cdn.jsdelivr.net or unpkg.com and retry.');
+}
+async function ensureEpub(){
+  await loadLib('jszip', () => !!window.JSZip);
+  await loadLib('epub', () => !!window.ePub);
+}
+
+async function loadEpubLib(buf, fallbackTitle){
+  setStatus('Loading EPUB library…');
+  await ensureEpub();
+  const book = ePub(buf);
+  await book.ready;
+  let title = cleanFileName(fallbackTitle) || 'Untitled', author = '';
+  try {
+    const m = await book.loaded.metadata;
+    if (m && !badTitle(m.title)) title = String(m.title).replace(/\s+/g, ' ').trim();
+    if (m && m.creator) author = joinAuthors([].concat(m.creator));
+  } catch {}
+  let toc = [];
+  try { const nav = await book.loaded.navigation; toc = flattenToc(nav.toc); } catch {}
+  let items = book.spine.spineItems || [];
+  if (!items.length) { items = []; book.spine.each(i => items.push(i)); }
+
+  const b = Builder();
+  let n = 0;
+  for (const item of items) {
+    n++;
+    setStatus(`Reading section ${n} of ${items.length}…`);
+    if (item.linear === 'no' || (item.properties || []).includes('nav')) continue;
+    let paras = [];
+    try {
+      const doc = await item.load(book.load.bind(book));
+      paras = extractParagraphs(doc).paras;
+      item.unload();
+    } catch (e) { continue; }
+    const wc = paras.reduce((a, t) => a + t.split(' ').length, 0);
+    if (wc < 8) continue;
+
+    const ih = normHref(item.href);
+    const hit = toc.find(t => { const th = normHref(t.href); return th === ih || th.endsWith('/' + ih) || ih.endsWith('/' + th); });
+    let ctitle = hit && hit.label ? hit.label.replace(/\s+/g, ' ').trim() : '';
+    if (ctitle && SKIP_TITLE_RE.test(ctitle) && wc < 800) continue;   // boilerplate
+    if (!ctitle) ctitle = paras[0].length < 70 ? paras[0] : `Section ${n}`;
+    b.chapter(ctitle.slice(0, 90));
+    paras.forEach(p => b.addPara(p));
+    await new Promise(r => setTimeout(r, 0));
+  }
+  try { book.destroy(); } catch {}
+  if (!b.words.length) throw new Error('No readable text found in this EPUB.');
+  const doc = b.finish(title); doc.author = author || '';
+  return doc;
+}
+
+/* =====================================================================
+   RSVP engine
+   ===================================================================== */
+function orpIndex(len){
+  if (len <= 1) return 0;
+  if (len <= 5) return 1;
+  if (len <= 9) return 2;
+  if (len <= 13) return 3;
+  return 4;
+}
+function orpOf(tok){
+  const m = tok.match(/^([^\p{L}\p{N}]*)([\s\S]*?)([^\p{L}\p{N}]*)$/u);
+  const lead = m ? m[1].length : 0;
+  const core = m ? m[2].length : tok.length;
+  if (!core) return 0;
+  return Math.min(tok.length - 1, lead + orpIndex(core));
+}
+
+const ABBR = /^(mr|mrs|ms|dr|prof|sr|jr|st|vs|etc|inc|ltd|no|fig|e\.g|i\.e|u\.s|a\.m|p\.m)$/i;
+function pauseFor(tok, isPara){
+  const t = tok.replace(/[\u201d\u2019"'\u00bb)\]}*_]+$/, '');
+  let p = 0;
+  if (/[.!?\u2026]$/.test(t)) {
+    const body = t.slice(0, -1).replace(/^[^\p{L}]+/u, '');
+    const abbr = t.endsWith('.') && (ABBR.test(body) || /^\p{Lu}$/u.test(body));
+    if (!abbr) p = SENT;
+  } else if (/[;:]$/.test(t) || /(\u2014|\u2013)$/.test(t)) {
+    p = CLAUSE;
+  } else if (/,$/.test(t)) {
+    p = COMMA;
+  }
+  if (isPara) p += PARA;
+  return p;
+}
+
+/* Long hyphenated words (12+ letters) are flashed in pieces, the hyphen staying on the earlier piece. */
+const partCache = new Map();
+function partsOf(w){
+  if (partCache.has(w)) return partCache.get(w);
+  let out = null;
+  if (w.length >= 12 && /[\p{L}\p{N}][-\u2010\u2011][\p{L}\p{N}]/u.test(w) && (w.match(/[\p{L}\p{N}]/gu) || []).length >= 12) {
+    const raw = w.split(/(?<=[-\u2010\u2011])(?=[\p{L}\p{N}])/u), g = [];
+    for (const r of raw) { if (g.length && g[g.length - 1].length + r.length <= 11) g[g.length - 1] += r; else g.push(r); }
+    if (g.length > 1) out = g;
+  }
+  if (partCache.size > 5000) partCache.clear();
+  partCache.set(w, out);
+  return out;
+}
+function chunkAt(i){
+  const t = S.words[i];
+  return { text: t, idx: orpOf(t), end: i + 1 };
+}
+
+function paint(text, idx){
+  el.wl.textContent = text.slice(0, idx);
+  el.wo.textContent = text.charAt(idx) || '\u00a0';
+  el.wr.textContent = text.slice(idx + 1);
+  fit();
+}
+function fit(){
+  el.word.style.transform = '';
+  const l = el.wl.parentElement.clientWidth, r = el.wr.parentElement.clientWidth;
+  const s = Math.min(1, l / (el.wl.offsetWidth || 1), r / (el.wr.offsetWidth || 1));
+  if (s < 0.999) el.word.style.transform = `scale(${s.toFixed(3)})`;
+}
+function paintRecent(i){
+  const r = $('#recent');
+  r.textContent = '';
+  if (i <= 0) return;
+  const sp = document.createElement('span');
+  sp.textContent = S.words.slice(Math.max(0, i - 3), i).join(' ');
+  r.appendChild(sp);
+}
+function display(i, part = 0){
+  const c = chunkAt(i);
+  S.parts = partsOf(c.text); S.part = S.parts ? Math.min(part, S.parts.length - 1) : 0;
+  if (S.parts) paint(S.parts[S.part], orpOf(S.parts[S.part])); else paint(c.text, c.idx);
+  paintRecent(i);
+  return c.end;
+}
+
+function effWpm(){
+  const t = prefs.wpm;
+  if (!prefs.warmup) return t;
+  const start = Math.max(100, t * 0.4);
+  return start + (t - start) * Math.min(1, S.warmElapsed / WARMUP_MS);
+}
+function delayFor(i, end){
+  let d = 60000 / effWpm() * (end - i);
+  for (let k = i; k < end; k++) {                                   // long words get a little longer on screen
+    const n = (S.words[k].match(/[\p{L}\p{N}]/gu) || []).length;
+    if (n > 8) d += 60000 / effWpm() * Math.min(0.5, (n - 8) * 0.1);
+  }
+  d += pauseFor(S.words[end - 1], S.para[end - 1]);
+  for (let k = i; k < end - 1; k++) d += pauseFor(S.words[k], false) * 0.5;
+  return d;
+}
+
+/* How long what is on screen should stay: a hyphenated word's time is shared out by length, its closing pause on the last piece. */
+function partDelay(){
+  const full = delayFor(S.cur, S.next), P = S.parts;
+  if (!P) return full;
+  const pause = pauseFor(S.words[S.next - 1], S.para[S.next - 1]);
+  const tot = P.reduce((a, x) => a + x.length, 0);
+  return (full - pause) * P[S.part].length / tot + (S.part === P.length - 1 ? pause : 0);
+}
+function scheduleNext(){
+  clearTimeout(S.timer);
+  const d = partDelay();
+  S.warmElapsed += d;
+  S.due = performance.now() + d;
+  S.timer = setTimeout(tick, d);
+}
+function tick(){
+  S.timer = null;
+  if (!S.playing) return;
+  if (S.parts && S.part < S.parts.length - 1) {                         // more pieces of this hyphenated word
+    const late = Math.min(Math.max(performance.now() - S.due, 0), 40);
+    S.part++; paint(S.parts[S.part], orpOf(S.parts[S.part]));
+    const d = Math.max(0, partDelay() - late);
+    S.warmElapsed += d; S.due = performance.now() + d; S.timer = setTimeout(tick, d);
+    return;
+  }
+  if (S.next >= S.words.length) { finish(); return; }
+  const left = timerRemaining();
+  if (left !== null && left <= 0) { pause(); S.timerLeft = null; S.sessionOn = false; updateTimerBtn(); toast('Auto-paused: time is up'); return; }
+  if (prefs.timer === 'chapter' && chapterAt(S.next) !== chapterAt(S.cur)) {
+    pause(); S.sessionOn = false; seek(S.next);                      // wait on the first word of the next chapter
+    toast('Auto-paused at the end of the chapter');
+    return;
+  }
+  const late = Math.min(Math.max(performance.now() - S.due, 0), 40);   // drift correction
+  S.cur = S.next;
+  S.next = display(S.cur);
+  updateUI();
+  const d = Math.max(0, partDelay() - late);
+  S.warmElapsed += d;
+  S.due = performance.now() + d;
+  S.timer = setTimeout(tick, d);
+}
+function finish(){
+  pause();
+  S.cur = Math.max(0, S.words.length - 1);
+  updateUI();
+}
+
+function seek(i){
+  if (!S.words.length) return;
+  i = Math.max(0, Math.min(S.words.length - 1, Math.round(i)));
+  clearTimeout(S.timer); S.timer = null;
+  S.cur = i;
+  S.next = display(i);
+  updateUI();
+  clearTimeout(S.saveT); S.saveT = setTimeout(() => savePos(true), 400);   // remember manual jumps too
+  if (S.playing) scheduleNext();
+}
+
+/* wake lock */
+let wake = null;
+async function lockScreen(){ try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch {} }
+function unlockScreen(){ try { wake && wake.release(); } catch {} wake = null; }
+
+function play(){
+  if (!S.words.length) { openDrawer('lib'); return; }
+  if (S.playing) return;
+  if (S.next >= S.words.length) seek(0);
+  S.playing = true;
+  if (prefs.timer !== 'off' && !S.sessionOn) { S.sessionOn = true; if (S.id) saveJSON('rsvp.tstart.' + S.id, { pos: S.cur, t: Date.now() }); }   // quiet marker for where this timed session began
+  S.warmElapsed = 0;
+  S.timerStart = performance.now();
+  document.body.classList.add('playing');
+  el.play.innerHTML = ICON_PAUSE;
+  lockScreen();
+  scheduleNext();
+  nudgeUI();
+}
+function pause(){
+  clearTimeout(S.timer); S.timer = null;
+  const was = S.playing;
+  if (was && typeof prefs.timer === 'number') S.timerLeft = timerRemaining();      // keep the time that is left
+  S.playing = false;
+  document.body.classList.remove('playing', 'idle');
+  el.play.innerHTML = ICON_PLAY;
+  unlockScreen();
+  if (was) { savePos(true); updateUI(); }
+  updateTimerBtn();
+}
+const toggle = () => S.playing ? pause() : play();
+
+/* =====================================================================
+   UI updates
+   ===================================================================== */
+function chapterAt(i){
+  let lo = 0, hi = S.chapters.length - 1, r = 0;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (S.chapters[m].start <= i) { r = m; lo = m + 1; } else hi = m - 1; }
+  return r;
+}
+function fmtTime(mins){
+  if (mins < 1) return '< 1 min';
+  const m = Math.round(mins);
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)} h ${m % 60} min`;
+}
+function updateUI(){
+  const n = S.words.length;
+  if (!n) { el.stats.textContent = 'No text loaded'; el.scrub.max = 0; el.scrub.value = 0; return; }
+  el.scrub.max = n - 1;
+  el.scrub.value = S.cur;
+  const remaining = n - S.cur - 1;
+  const est = remaining <= 0 ? 'Done' : `Est. ${fmtTime(remaining / prefs.wpm)} remaining`;
+  el.stats.textContent = `Word ${(S.cur + 1).toLocaleString()} of ${n.toLocaleString()} | ${est}`;
+
+  const ci = chapterAt(S.cur);
+  if (ci !== S.chapIdx) {
+    S.chapIdx = ci;
+    el.chapTitle.textContent = S.chapters.length > 1 ? cleanChapterTitle(S.chapters[ci].title) : '';
+    $$('#chapList .chap').forEach((b, k) => b.classList.toggle('on', k === ci));
+  }
+  $('#bPrevCh').disabled = $('#bNextCh').disabled = S.chapters.length < 2;
+
+  const eff = Math.round(effWpm());
+  el.wpmLabel.textContent = (S.playing && prefs.warmup && eff < prefs.wpm - 2) ? `${eff} \u2192 ${prefs.wpm} WPM` : `${prefs.wpm} WPM`;
+
+  updateMarkBtn();
+  updateTimerBtn();
+  if (S.playing) savePos(false);
+}
+
+function savePos(force){
+  const now = Date.now();
+  if (!force && now - S.lastSave < 2000) return;
+  S.lastSave = now;
+  if (S.id) saveJSON('rsvp.pos.' + S.id, S.cur);
+}
+
+/* Sentence starts: the word after one that ends a sentence (or a paragraph). */
+function buildSentences(){
+  const W = S.words, st = [0];
+  for (let i = 0; i < W.length - 1; i++) if (S.para[i] || pauseFor(W[i], false) >= SENT) st.push(i + 1);
+  S.sent = st;
+}
+function nextSentence(){
+  const k = S.sent.findIndex(s => s > S.cur);
+  if (k >= 0) seek(S.sent[k]);
+}
+function prevSentence(){
+  let j = 0;
+  for (let k = 0; k < S.sent.length; k++) { if (S.sent[k] <= S.cur) j = k; else break; }
+  seek(S.cur - S.sent[j] > 2 ? S.sent[j] : S.sent[Math.max(0, j - 1)]);     // like "previous track": restart this one first
+}
+
+function setWpm(v){
+  prefs.wpm = Math.max(150, Math.min(1000, Math.round(v / 5) * 5));
+  el.wpm.value = prefs.wpm;
+  saveJSON('rsvp.prefs', prefs);
+  updateUI();
+  el.wpmLabel.textContent = `${prefs.wpm} WPM`;
+}
+
+/* idle dimming while reading */
+let idleT;
+function nudgeUI(){
+  document.body.classList.remove('idle');
+  clearTimeout(idleT);
+  if (S.playing) idleT = setTimeout(() => document.body.classList.add('idle'), 2500);
+}
+['pointerdown', 'pointermove', 'keydown', 'touchstart'].forEach(ev => addEventListener(ev, nudgeUI, { passive: true }));
+
+/* =====================================================================
+   Toast, auto-pause button, bookmarks
+   ===================================================================== */
+let toastT;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+const TIMER_STEPS = ['off', 'chapter', 15, 30, 60];
+/* The minute timer is a pool of reading time: it only runs while playing, a pause keeps what's left,
+   and it refills when it runs out or when you change the setting. */
+function timerRemaining(){
+  if (typeof prefs.timer !== 'number') return null;
+  const base = S.timerLeft == null ? prefs.timer * 60000 : S.timerLeft;
+  return Math.max(0, base - (S.playing ? performance.now() - S.timerStart : 0));
+}
+function resetTimer(){ S.timerLeft = null; S.sessionOn = false; if (S.playing) S.timerStart = performance.now(); }
+function updateTimerBtn(){
+  const b = $('#btnTimer'), tx = $('#timerTxt');
+  let t = '';
+  if (prefs.timer === 'chapter') t = 'Ch. end';
+  else if (typeof prefs.timer === 'number') {
+    const left = timerRemaining();
+    t = Math.floor(left / 60000) + ':' + String(Math.floor(left % 60000 / 1000)).padStart(2, '0');
+  }
+  tx.textContent = t || 'Timer';
+  b.classList.toggle('on', prefs.timer !== 'off');
+}
+
+const marksKey = () => 'rsvp.marks.' + S.id;
+function loadMarks(){ const m = loadJSON(marksKey(), []); S.marks = Array.isArray(m) ? m : []; }
+function saveMarks(){ if (S.id) saveJSON(marksKey(), S.marks); }
+const nearMark = pos => S.marks.findIndex(m => Math.abs(m.pos - pos) <= 2);
+
+function addMark(){
+  if (!S.words.length) { toast('Load some text first'); return; }
+  const near = nearMark(S.cur);
+  if (near >= 0) {
+    S.marks.splice(near, 1); saveMarks(); renderMarks(); updateMarkBtn();
+    toast('Bookmark removed'); return;
+  }
+  const ci = chapterAt(S.cur);
+  S.marks.push({
+    pos: S.cur,
+    text: S.words.slice(S.cur, S.cur + 8).join(' '),
+    chap: S.chapters.length > 1 ? cleanChapterTitle(S.chapters[ci].title) : '',
+    t: Date.now()
+  });
+  S.marks.sort((a, b) => a.pos - b.pos);
+  saveMarks(); renderMarks(); updateMarkBtn();
+  toast('Bookmarked');
+}
+function updateMarkBtn(){ $('#btnMark').classList.toggle('on', nearMark(S.cur) >= 0); }
+
+function renderTimerMark(){
+  const box = $('#timerMark'); box.innerHTML = '';
+  if (!S.id || !S.words.length) return;
+  const m = loadJSON('rsvp.tstart.' + S.id, null), n = S.words.length;
+  if (!m || typeof m.pos !== 'number' || m.pos < 0 || m.pos >= n || Math.abs(m.pos - S.cur) <= 30) return;
+  const row = document.createElement('div'); row.className = 'mark timer';
+  const go = document.createElement('button'); go.className = 'go';
+  const b = document.createElement('b'); b.textContent = S.words.slice(m.pos, m.pos + 8).join(' ') + '…';
+  const sm = document.createElement('small');
+  sm.textContent = ['Timer started here', cleanChapterTitle(S.chapters[chapterAt(m.pos)].title), (n > 1 ? Math.round(m.pos / (n - 1) * 100) : 0) + '%'].filter(Boolean).join(' · ');
+  go.append(b, sm); go.onclick = () => { seek(m.pos); closeDrawer(); };
+  row.appendChild(go); box.appendChild(row);
+}
+function renderMarks(){
+  const list = $('#markList'), bar = $('#markbar');
+  list.innerHTML = ''; bar.innerHTML = '';
+  const n = S.words.length;
+  if (!S.marks.length) { list.innerHTML = '<p class="muted">No bookmarks yet.</p>'; return; }
+  S.marks.forEach((m, i) => {
+    const row = document.createElement('div'); row.className = 'mark';
+    const go = document.createElement('button'); go.className = 'go';
+    const b = document.createElement('b'); b.textContent = m.text + '…';
+    const s = document.createElement('small');
+    const pct = n > 1 ? Math.round(m.pos / (n - 1) * 100) : 0;
+    s.textContent = [cleanChapterTitle(m.chap), pct + '%', 'word ' + (m.pos + 1).toLocaleString()].filter(Boolean).join(' · ');
+    go.append(b, s);
+    go.onclick = () => { seek(m.pos); closeDrawer(); };
+    const del = document.createElement('button'); del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', 'Delete bookmark');
+    del.onclick = () => { S.marks.splice(i, 1); saveMarks(); renderMarks(); updateMarkBtn(); };
+    row.append(go, del); list.appendChild(row);
+    const dot = document.createElement('i');
+    dot.style.left = (n > 1 ? m.pos / (n - 1) * 100 : 0) + '%';
+    bar.appendChild(dot);
+  });
+}
+
+/* =====================================================================
+   Loading documents
+   ===================================================================== */
+function setStatus(msg, err){ el.status.textContent = msg || ''; el.status.classList.toggle('err', !!err); }
+
+function renderChapters(){
+  el.chapList.innerHTML = '';
+  $('#chapLabel').textContent = S.chapters.length > 1 ? `Chapters in this book (${S.chapters.length})` : 'Chapters in this book';
+  if (S.chapters.length < 2) {
+    el.chapList.innerHTML = '<p class="muted">No chapters.</p>';
+    return;
+  }
+  S.chapters.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'chap';
+    const t = document.createElement('span'); t.textContent = cleanChapterTitle(c.title);
+    const next = i + 1 < S.chapters.length ? S.chapters[i + 1].start : S.words.length;
+    const s = document.createElement('small'); s.textContent = (next - c.start).toLocaleString() + ' w';
+    b.append(t, s);
+    b.onclick = () => { seek(c.start); closeDrawer(); };
+    el.chapList.appendChild(b);
+  });
+}
+
+/* =====================================================================
+   Library: any number of books are kept side by side on this device.
+   Nothing is deleted unless you delete it.
+   ===================================================================== */
+let lib = loadJSON('rsvp.library', []);
+if (!Array.isArray(lib)) lib = [];
+const saveLib = () => saveJSON('rsvp.library', lib);
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const posKey = id => 'rsvp.pos.' + id;
+const bookPos = id => { const v = Number(loadJSON(posKey(id), 0)); return Number.isFinite(v) && v > 0 ? v : 0; };
+
+/* Store a freshly parsed book. Re-adding the same title replaces its text but keeps your place and bookmarks. */
+async function registerDoc(doc, { byTitle = false } = {}){
+  let meta = lib.find(b => ((b.orig || b.title) === doc.title || b.title === doc.title) && (byTitle || b.words === doc.words.length));
+  const id = meta ? meta.id : newId();
+  doc.id = id;
+  try {
+    await DB.put('book:' + id, { id, title: doc.title, author: doc.author || '', words: doc.words, para: doc.para, chapters: doc.chapters });
+  } catch (e) {
+    setStatus('This book is open, but your browser would not let me store it for later.', true);
+    return { pos: 0, saved: false };
+  }
+  let pos = 0;
+  if (!meta) {
+    lib.push({ id, title: doc.title, orig: doc.title, author: doc.author || '', words: doc.words.length, added: Date.now(), opened: Date.now() });
+  } else {
+    if (!meta.author && doc.author) meta.author = doc.author;
+    if (!meta.orig) meta.orig = doc.title;
+    pos = bookPos(id);
+    if (meta.words !== doc.words.length && meta.words > 1) {          // text changed length: keep the same relative place
+      const f = doc.words.length > 1 ? (doc.words.length - 1) / (meta.words - 1) : 0;
+      pos = Math.round(pos * f);
+      const marks = loadJSON('rsvp.marks.' + id, []);
+      if (Array.isArray(marks)) saveJSON('rsvp.marks.' + id, marks.map(m => Object.assign({}, m, { pos: Math.round(m.pos * f) })));
+    }
+    meta.words = doc.words.length;
+  }
+  saveLib();
+  return { pos, saved: true };
+}
+
+async function loadDoc(doc, { pos = 0, autoplay = false } = {}){
+  if (S.id) savePos(true);                       // remember where we were in the book we're leaving
+  pause();
+  S.words = doc.words;
+  S.para = doc.para instanceof Uint8Array ? doc.para : Uint8Array.from(doc.para || []);
+  S.chapters = doc.chapters;
+  buildSentences();
+  S.id = doc.id || newId();
+  const meta = lib.find(b => b.id === S.id);
+  S.title = meta ? meta.title : doc.title;        // your own rename wins over the file's name
+  S.author = meta ? (meta.author || '') : (doc.author || '');
+  S.chapIdx = -1; S.norm = null; S.sessionOn = false;
+  el.docTitle.textContent = S.title;
+  renderChapters();
+  loadMarks();
+  renderMarks();
+  renderSearch();
+  seek(Math.min(Math.max(0, pos), S.words.length - 1));
+  if (meta) { meta.opened = Date.now(); saveLib(); }
+  saveJSON('rsvp.current', S.id);
+  savePos(true);
+  renderLibrary();
+  closeDrawer();
+  if (autoplay) setTimeout(play, 350);
+}
+
+async function openBook(id){
+  if (id === S.id) { closeDrawer(); return; }
+  setStatus('Opening…');
+  try {
+    const doc = await DB.get('book:' + id);
+    if (!doc || !doc.words || !doc.words.length) throw new Error('That book is no longer stored on this device.');
+    await loadDoc(doc, { pos: bookPos(id) });
+    setStatus('');
+  } catch (e) { setStatus(e.message || 'Could not open that book.', true); }
+}
+
+function resetReader(){
+  pause();
+  S.words = []; S.para = new Uint8Array(0); S.chapters = []; S.sent = [0]; S.id = ''; S.cur = S.next = 0; S.chapIdx = -1; S.marks = []; S.norm = null;
+  try { localStorage.removeItem('rsvp.current'); } catch {}
+  el.docTitle.textContent = 'RSVP Speed Reader'; el.chapTitle.textContent = '';
+  paint('Load a text', 2); $('#recent').textContent = '';
+  renderChapters(); renderMarks(); renderSearch(); updateUI();
+}
+
+/* Two-tap confirmation (browsers and previews often block confirm() dialogs). */
+function armed(btn, armedLabel, fn){
+  const orig = btn.textContent;
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('armed')) { clearTimeout(btn._t); btn.classList.remove('armed'); btn.textContent = orig; fn(); return; }
+    btn.classList.add('armed'); btn.textContent = armedLabel;
+    btn._t = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = orig; }, 3500);
+  });
+}
+async function deleteBook(id){
+  const m = lib.find(b => b.id === id);
+  if (!m) return;
+  try { await DB.del('book:' + id); } catch {}
+  lib = lib.filter(b => b.id !== id); saveLib();
+  try { localStorage.removeItem(posKey(id)); localStorage.removeItem('rsvp.marks.' + id); localStorage.removeItem('rsvp.tstart.' + id); } catch {}
+  if (id === S.id) resetReader();
+  renderLibrary();
+}
+async function deleteEverything(){
+  pause();
+  for (const m of lib) {
+    try { await DB.del('book:' + m.id); } catch {}
+    try { localStorage.removeItem(posKey(m.id)); localStorage.removeItem('rsvp.marks.' + m.id); localStorage.removeItem('rsvp.tstart.' + m.id); } catch {}
+  }
+  try { await DB.del('current'); localStorage.removeItem('rsvp.pos'); } catch {}
+  lib = []; saveLib();
+  resetReader(); renderLibrary(); openDrawer('lib');
+}
+
+function editBook(m, row){
+  row.className = 'mark editing';
+  row.innerHTML = '';
+  const form = document.createElement('div'); form.className = 'editform';
+  const mk = (label, value, ph) => {
+    const l = document.createElement('label'); l.textContent = label;
+    const i = document.createElement('input'); i.type = 'text'; i.value = value; i.placeholder = ph;
+    i.setAttribute('autocomplete', 'off'); i.setAttribute('autocapitalize', 'words');
+    form.append(l, i); return i;
+  };
+  const ti = mk('Title', m.title, 'Title'), ai = mk('Author', m.author || '', 'Author (optional)');
+  const acts = document.createElement('div'); acts.className = 'acts';
+  const save = document.createElement('button'); save.className = 'btn primary'; save.textContent = 'Save';
+  const cancel = document.createElement('button'); cancel.className = 'btn'; cancel.textContent = 'Cancel';
+  const commit = () => {
+    const t = ti.value.replace(/\s+/g, ' ').trim();
+    if (t) m.title = t;
+    m.author = ai.value.replace(/\s+/g, ' ').trim();
+    saveLib();
+    if (m.id === S.id) { S.title = m.title; S.author = m.author; el.docTitle.textContent = S.title; }
+    renderLibrary();
+  };
+  save.onclick = commit; cancel.onclick = renderLibrary;
+  form.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } else if (e.key === 'Escape') { e.stopPropagation(); renderLibrary(); } });
+  acts.append(save, cancel); form.append(acts); row.append(form);
+  ti.focus(); ti.select();
+}
+
+function renderLibrary(){
+  const box = $('#bookList');
+  box.innerHTML = '';
+  if (!lib.length) { box.innerHTML = '<p class="muted">No books yet.</p>'; return; }
+  const prog = m => m.words > 1 ? (m.id === S.id ? S.cur : bookPos(m.id)) / (m.words - 1) : 0;
+  const byName = (a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true });
+  const SORTS = { recent: (a, b) => b.opened - a.opened, added: (a, b) => b.added - a.added, oldest: (a, b) => a.added - b.added,
+    az: byName, za: (a, b) => byName(b, a), progress: (a, b) => prog(b) - prog(a) };
+  [...lib].sort(SORTS[prefs.sort] || SORTS.recent).forEach(m => {
+    const row = document.createElement('div'); row.className = 'mark book' + (m.id === S.id ? ' on' : '');
+    const go = document.createElement('button'); go.className = 'go';
+    const t = document.createElement('b'); t.textContent = m.title;
+    const pos = m.id === S.id ? S.cur : bookPos(m.id);
+    const pct = m.words > 1 ? Math.min(100, Math.round(pos / (m.words - 1) * 100)) : 0;
+    const s = document.createElement('small'); s.textContent = [m.author, m.words.toLocaleString() + ' words', pct + '% read', m.id === S.id ? 'open now' : ''].filter(Boolean).join(' · ');
+    go.append(t, s);
+    go.onclick = () => openBook(m.id);
+    const ed = document.createElement('button'); ed.className = 'edit'; ed.setAttribute('aria-label', 'Rename book'); ed.title = 'Rename';
+    ed.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+    ed.onclick = () => editBook(m, row);
+    const del = document.createElement('button'); del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', 'Delete book');
+    armed(del, 'Delete?', () => deleteBook(m.id));
+    row.append(go, ed, del); box.appendChild(row);
+  });
+}
+
+/* Earlier versions kept a single book under the key "current"; move it into the library once. */
+async function migrateLegacy(){
+  if (localStorage.getItem('rsvp.library') !== null) return;
+  try {
+    const old = await DB.get('current');
+    if (old && old.words && old.words.length) {
+      const id = old.id || newId();
+      await DB.put('book:' + id, Object.assign({}, old, { id }));
+      const p = loadJSON('rsvp.pos', {});
+      if (p && p.id === old.id) saveJSON(posKey(id), p.pos || 0);
+      lib.push({ id, title: old.title, words: old.words.length, added: Date.now(), opened: Date.now() });
+      saveJSON('rsvp.current', id);
+      await DB.del('current');
+    }
+    saveLib();
+  } catch (e) { /* try again next launch; nothing has been deleted */ }
+}
+
+function readFile(file, mode){
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = () => rej(fr.error || new Error('Could not read file.'));
+    mode === 'text' ? fr.readAsText(file) : fr.readAsArrayBuffer(file);
+  });
+}
+
+async function handleFile(file){
+  if (!file) return;
+  const name = file.name || 'Untitled';
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const base = cleanFileName(name) || 'Untitled';
+  setStatus(`Opening ${name}…`);
+  try {
+    let doc;
+    if (ext === 'epub') {
+      const buf = await readFile(file, 'buffer');
+      doc = await loadEpub(buf, base);
+    } else if (ext === 'tex' || ext === 'latex') {
+      const tx = texToText(await readFile(file, 'text'));
+      doc = ingestText(tx.text, { title: tx.title || base, tex: true });
+      if (tx.author) doc.author = tx.author;
+    } else if (ext === 'md' || ext === 'markdown') {
+      doc = ingestText(await readFile(file, 'text'), { title: base, md: true });
+    } else {
+      doc = ingestText(await readFile(file, 'text'), { title: base });
+    }
+    setStatus(`Loaded ${doc.words.length.toLocaleString()} words.`);
+    const r = await registerDoc(doc, { byTitle: true });
+    await loadDoc(doc, { pos: r.pos });
+  } catch (e) {
+    console.error(e);
+    setStatus(e.message || 'Could not open that file.', true);
+  }
+}
+
+/* =====================================================================
+   Search (lives in the drawer, so the reading screen stays clear)
+   ===================================================================== */
+const normTok = w => w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+function searchBook(q){
+  const Q = q.toLowerCase().split(/\s+/).map(normTok).filter(Boolean);
+  if (!Q.length || (Q.length === 1 && Q[0].length < 2)) return null;
+  if (!S.norm) S.norm = S.words.map(normTok);
+  const N = S.norm, k = Q.length, last = Q[k - 1], exact = /\s$/.test(q);   // a trailing space means "whole word"
+  const hits = []; let total = 0;
+  for (let i = 0; i + k <= N.length; i++) {
+    let ok = true;
+    for (let j = 0; j < k - 1; j++) if (N[i + j] !== Q[j]) { ok = false; break; }
+    if (!ok) continue;
+    const w = N[i + k - 1];
+    if (exact ? w !== last : !w.startsWith(last)) continue;
+    total++; if (hits.length < 80) hits.push(i);
+  }
+  return { hits, total, k };
+}
+function renderSearch(){
+  const box = $('#searchList'), info = $('#searchInfo');
+  box.innerHTML = ''; info.textContent = '';
+  if (!S.words.length) return;
+  const r = searchBook($('#q').value);
+  if (!r) return;
+  info.textContent = !r.total ? 'No matches' : r.total === 1 ? '1 match'
+    : r.total > r.hits.length ? `${r.total.toLocaleString()} matches · showing the first ${r.hits.length}` : `${r.total} matches`;
+  const n = S.words.length, W = S.words;
+  r.hits.forEach(pos => {
+    const row = document.createElement('div'); row.className = 'mark';
+    const go = document.createElement('button'); go.className = 'go';
+    const b = document.createElement('b'); b.className = 'snip';
+    const hl = document.createElement('span'); hl.className = 'hl'; hl.textContent = W.slice(pos, pos + r.k).join(' ');
+    b.append((pos > 5 ? '… ' : '') + W.slice(Math.max(0, pos - 5), pos).join(' ') + ' ', hl, ' ' + W.slice(pos + r.k, pos + r.k + 10).join(' '));
+    const sm = document.createElement('small');
+    const ci = chapterAt(pos), pct = n > 1 ? Math.round(pos / (n - 1) * 100) : 0;
+    sm.textContent = [S.chapters.length > 1 ? cleanChapterTitle(S.chapters[ci].title) : '', pct + '%'].filter(Boolean).join(' · ');
+    go.append(b, sm);
+    go.onclick = () => { seek(pos); closeDrawer(); };
+    row.appendChild(go); box.appendChild(row);
+  });
+}
+
+/* =====================================================================
+   Backup / restore: one file holding every book, bookmark and place
+   ===================================================================== */
+const dataMsg = t => { $('#dataMsg').textContent = t || ''; };
+async function backupLibrary(){
+  if (!lib.length) { dataMsg('Nothing to back up yet.'); return; }
+  dataMsg('Preparing…');
+  try {
+    if (S.id) savePos(true);
+    const books = [];
+    for (const m of lib) {
+      const d = await DB.get('book:' + m.id);
+      if (!d || !d.words) continue;
+      const paraIdx = [];
+      if (d.para) for (let i = 0; i < d.words.length; i++) if (d.para[i]) paraIdx.push(i);
+      books.push({ meta: m, title: d.title, author: d.author || '', pos: bookPos(m.id), marks: loadJSON('rsvp.marks.' + m.id, []), words: d.words, paraIdx, chapters: d.chapters });
+    }
+    const data = { app: 'rsvp-reader', v: 1, saved: Date.now(), prefs, current: S.id, books };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const name = 'rsvp-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    const file = new File([blob], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: name }); dataMsg(''); return; }
+      catch (e) { if (e && e.name === 'AbortError') { dataMsg(''); return; } }
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    dataMsg(`Saved ${books.length} ${books.length === 1 ? 'book' : 'books'}.`);
+  } catch (e) { dataMsg('Could not create the backup.'); }
+}
+async function restoreLibrary(file){
+  if (!file) return;
+  try {
+    const data = JSON.parse(await readFile(file, 'text'));
+    if (!data || data.app !== 'rsvp-reader' || !Array.isArray(data.books)) throw new Error('That is not a backup from this app.');
+    const wasEmpty = !lib.length;
+    let added = 0, firstId = '';
+    for (const b of data.books) {
+      if (!b || !b.meta || !b.meta.id || !Array.isArray(b.words) || !b.words.length) continue;
+      const id = b.meta.id;
+      if (lib.some(x => x.id === id || (x.title === b.meta.title && x.words === b.meta.words))) continue;
+      const para = new Uint8Array(b.words.length);
+      (b.paraIdx || []).forEach(i => { if (i >= 0 && i < para.length) para[i] = 1; });
+      const chapters = Array.isArray(b.chapters) && b.chapters.length ? b.chapters : [{ title: b.title || 'Start', start: 0 }];
+      await DB.put('book:' + id, { id, title: b.title || b.meta.title, author: b.author || '', words: b.words, para, chapters });
+      lib.push(Object.assign({}, b.meta, { words: b.words.length }));
+      saveJSON(posKey(id), Number(b.pos) || 0);
+      saveJSON('rsvp.marks.' + id, Array.isArray(b.marks) ? b.marks : []);
+      if (!firstId || id === data.current) firstId = id;
+      added++;
+    }
+    saveLib();
+    if (wasEmpty && data.prefs && typeof data.prefs === 'object') { Object.assign(prefs, data.prefs); commitPrefs(); }
+    renderLibrary();
+    dataMsg(added ? `Restored ${added} ${added === 1 ? 'book' : 'books'}.` : 'Everything in that backup is already here.');
+    if (added && !S.id) await openBook(firstId);
+  } catch (e) { dataMsg(e.message || 'Could not read that file.'); }
+}
+
+/* =====================================================================
+   Drawer
+   ===================================================================== */
+function openDrawer(tab){
+  if (S.playing) pause();
+  renderLibrary();
+  renderTimerMark();
+  if (tab) showTab(tab);
+  el.drawer.classList.add('open');
+  applyFold(); el.backdrop.classList.add('open');
+  el.drawer.setAttribute('aria-hidden', 'false');
+}
+function closeDrawer(){
+  el.drawer.classList.remove('open'); el.backdrop.classList.remove('open');
+  el.drawer.setAttribute('aria-hidden', 'true');
+}
+function showTab(t){
+  $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $$('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + t));
+  if (t === 'marks') renderTimerMark();
+  if (t === 'search') { renderSearch(); setTimeout(() => { try { $('#q').focus(); } catch {} }, 60); }
+}
+
+/* =====================================================================
+   Preferences
+   ===================================================================== */
+/* The word is sized for the screen: on a narrow phone the setting is capped so words don't have to be squeezed. */
+const maxSize = () => {
+  let m = Math.round(innerWidth * 0.125);                       // keep words from needing to be squeezed sideways
+  const st = $('#stage'), sh = st ? st.clientHeight : 0;
+  if (sh > 0) m = Math.min(m, Math.floor(sh / 3));              // and keep the word box inside the reading area (phone landscape)
+  return Math.max(36, Math.min(140, m));
+};
+function applySize(){
+  const sl = $('#size'), e = Math.min(prefs.size, maxSize());
+  sl.max = maxSize(); sl.value = e;
+  root.style.setProperty('--size', e + 'px');
+  $('#sizePrev').textContent = e + ' px';
+}
+/* Web fonts arrive a moment after they're chosen; re-fit the word once they have. */
+function loadFont(){
+  const fam = (FONTS[prefs.font] || FONTS.sans).split(',')[0].replace(/["']/g, '').trim();
+  if (!document.fonts || !document.fonts.load) return;
+  Promise.all([document.fonts.load('500 40px "' + fam + '"'), document.fonts.load('700 40px "' + fam + '"')]).then(() => fit()).catch(() => {});
+}
+function applyPrefs(){
+  root.dataset.theme = prefs.theme;
+  root.style.setProperty('--accent', prefs.accent);
+  root.style.setProperty('--font', FONTS[prefs.font] || FONTS.sans);
+  loadFont();
+  applySize();
+  $('#metaTheme').setAttribute('content', THEME_COLORS[prefs.theme] || '#000000');
+  $$('[data-pref]').forEach(b => b.classList.toggle('on', String(prefs[b.dataset.pref]).toLowerCase() === b.dataset.val.toLowerCase()));
+  $('#optWarm').checked = prefs.warmup;
+  if (!/^#[0-9a-f]{6}$/i.test(prefs.accent)) prefs.accent = '#e63946';
+  $('#accentCustom').value = prefs.accent;
+  $('#accentHex').textContent = prefs.accent;
+  el.wpm.value = prefs.wpm;
+  el.wpmLabel.textContent = `${prefs.wpm} WPM`;
+  updateTimerBtn();
+  $('#sortSel').value = prefs.sort;
+  applyFold();
+}
+function commitPrefs(redraw = true){
+  saveJSON('rsvp.prefs', prefs);
+  applyPrefs();
+  if (redraw) {
+    if (S.words.length) { S.next = display(S.cur); updateUI(); }
+    else fit();
+  }
+}
+
+/* =====================================================================
+   PWA bits: manifest + icons generated at runtime (keeps everything in one file)
+   ===================================================================== */
+function makeIcon(size){
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d');
+  g.fillStyle = '#0b0b0b'; g.fillRect(0, 0, size, size);
+  g.fillStyle = '#3a3a3a';
+  g.fillRect(size * .18, size * .3, size * .64, size * .012);
+  g.fillRect(size * .18, size * .69, size * .64, size * .012);
+  g.fillStyle = '#e63946';
+  g.fillRect(size * .495, size * .3, size * .012, size * .07);
+  g.fillRect(size * .495, size * .63, size * .012, size * .07);
+  g.font = `700 ${size * .3}px -apple-system, Helvetica, Arial, sans-serif`;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = '#f2f2f2';
+  g.fillText('re', size * .43, size * .52);
+  g.fillStyle = '#e63946';
+  g.fillText('a', size * .66, size * .52);
+  g.fillStyle = '#f2f2f2';
+  return c.toDataURL('image/png');
+}
+function setupPWA(){
+  try {
+    const i180 = makeIcon(180), i192 = makeIcon(192), i512 = makeIcon(512);
+    const touch = document.createElement('link');
+    touch.rel = 'apple-touch-icon'; touch.href = i180; document.head.appendChild(touch);
+    const icon = document.createElement('link');
+    icon.rel = 'icon'; icon.href = i192; document.head.appendChild(icon);
+    const base = new URL('.', location.href).href;
+    const manifest = {
+      name: 'RSVP Speed Reader', short_name: 'RSVP Reader',
+      start_url: base, scope: base, display: 'fullscreen',
+      orientation: 'any', background_color: '#000000', theme_color: '#000000',
+      icons: [
+        { src: i192, sizes: '192x192', type: 'image/png' },
+        { src: i512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+      ]
+    };
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
+    document.head.appendChild(link);
+  } catch (e) { /* non-critical */ }
+
+  // Optional offline support: only registers if a sw.js sits next to index.html
+  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+    fetch('sw.js', { method: 'HEAD' }).then(r => { if (r.ok) navigator.serviceWorker.register('sw.js'); }).catch(() => {});
+  }
+}
+
+/* =====================================================================
+   Events
+   ===================================================================== */
+$('#stage').addEventListener('click', toggle);
+el.play.addEventListener('click', toggle);
+$('#bBack').addEventListener('click', () => seek(S.cur - 10));
+$('#bPrevSent').addEventListener('click', prevSentence);
+$('#bNextSent').addEventListener('click', nextSentence);
+$('#bFwd').addEventListener('click', () => seek(S.cur + 10));
+$('#bRestart').addEventListener('click', () => seek(0));
+$('#bPrevCh').addEventListener('click', () => {
+  if (S.chapters.length < 2) return;
+  const ci = chapterAt(S.cur);
+  seek(S.cur - S.chapters[ci].start > 25 || ci === 0 ? S.chapters[ci].start : S.chapters[ci - 1].start);
+});
+$('#bNextCh').addEventListener('click', () => {
+  const ci = chapterAt(S.cur);
+  if (ci + 1 < S.chapters.length) seek(S.chapters[ci + 1].start);
+});
+el.scrub.addEventListener('input', () => seek(+el.scrub.value));
+el.wpm.addEventListener('input', () => setWpm(+el.wpm.value));
+/* Fine speed steps: 5 WPM per press, and holding the button keeps going. */
+function holdRepeat(btn, fn){
+  let t1 = null, t2 = null;
+  const stop = () => { clearTimeout(t1); clearInterval(t2); t1 = t2 = null; };
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); stop(); fn(); t1 = setTimeout(() => { t2 = setInterval(fn, 80); }, 450); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, stop));
+  btn.addEventListener('click', e => { if (e.detail === 0) fn(); });       // keyboard activation
+}
+holdRepeat($('#wMinus'), () => setWpm(prefs.wpm - 5));
+holdRepeat($('#wPlus'), () => setWpm(prefs.wpm + 5));
+
+$('#btnLib').addEventListener('click', () => openDrawer('lib'));
+$('#btnSet').addEventListener('click', () => openDrawer('set'));
+$('#btnClose').addEventListener('click', closeDrawer);
+el.backdrop.addEventListener('click', closeDrawer);
+$$('.tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+$('#btnLoad').addEventListener('click', async () => {
+  const raw = $('#paste').value;
+  if (!raw.trim()) { setStatus('Paste some text first.', true); return; }
+  try {
+    const head = raw.trim().split(/\s+/).slice(0, 5).join(' ');
+    const pt = head.length > 38 ? head.slice(0, 38) + '…' : head;
+    let doc;
+    if (looksLikeTex(raw)) {
+      const tx = texToText(raw);
+      doc = ingestText(tx.text, { title: tx.title || pt, tex: true });
+      if (tx.author) doc.author = tx.author;
+    } else doc = ingestText(raw, { title: pt });
+    setStatus('');
+    const r = await registerDoc(doc);
+    await loadDoc(doc, { pos: r.pos, autoplay: true });
+    $('#paste').value = '';                 // ready for the next paste
+  } catch (e) { setStatus(e.message, true); }
+});
+
+$('#file').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; handleFile(f); });
+['dragover', 'dragenter'].forEach(ev => addEventListener(ev, e => { e.preventDefault(); $('#drop').classList.add('drag'); }));
+['dragleave', 'drop'].forEach(ev => addEventListener(ev, e => { e.preventDefault(); $('#drop').classList.remove('drag'); }));
+addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) { openDrawer('lib'); handleFile(f); } });
+
+$$('[data-pref]').forEach(b => b.addEventListener('click', () => {
+  const v = b.dataset.val;
+  prefs[b.dataset.pref] = /^\d+$/.test(v) ? Number(v) : v;
+  if (b.dataset.pref === 'timer') resetTimer();
+  commitPrefs();
+}));
+$('#accentCustom').addEventListener('input', e => { prefs.accent = e.target.value; commitPrefs(false); });
+$('#size').addEventListener('input', e => { prefs.size = +e.target.value; commitPrefs(); });
+$('#optWarm').addEventListener('change', e => { prefs.warmup = e.target.checked; commitPrefs(false); });
+
+function applyFold(){
+  const o = !!prefs.chapOpen;
+  $('#chapToggle').setAttribute('aria-expanded', o);
+  el.chapList.hidden = !o;
+  if (o) { const on = el.chapList.querySelector('.chap.on'); if (on) on.scrollIntoView({ block: 'center' }); }
+}
+$('#chapToggle').addEventListener('click', () => { prefs.chapOpen = !prefs.chapOpen; saveJSON('rsvp.prefs', prefs); applyFold(); });
+$('#sortSel').addEventListener('change', e => { prefs.sort = e.target.value; saveJSON('rsvp.prefs', prefs); renderLibrary(); });
+armed($('#btnClear'), 'Tap again to delete everything', deleteEverything);
+$('#btnBackup').addEventListener('click', backupLibrary);
+$('#restoreFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; restoreLibrary(f); });
+let searchT = null;
+$('#q').addEventListener('input', () => { clearTimeout(searchT); searchT = setTimeout(renderSearch, 150); });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
+
+document.addEventListener('click', e => { const b = e.target.closest('button'); if (b) b.blur(); });
+
+addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'textarea' || (tag === 'input' && (e.target.type === 'text' || e.target.type === 'search'))) return;
+  if (e.key === 'Escape') { closeDrawer(); return; }
+  if (el.drawer.classList.contains('open')) return;
+  switch (e.key) {
+    case ' ': e.preventDefault(); toggle(); break;
+    case 'ArrowLeft': e.preventDefault(); e.shiftKey ? prevSentence() : seek(S.cur - 10); break;
+    case 'ArrowRight': e.preventDefault(); e.shiftKey ? nextSentence() : seek(S.cur + 10); break;
+    case 'ArrowUp': e.preventDefault(); setWpm(prefs.wpm + 5); break;
+    case 'ArrowDown': e.preventDefault(); setWpm(prefs.wpm - 5); break;
+    case 'r': case 'R': seek(0); break;
+    case 'b': case 'B': addMark(); break;
+  }
+});
+
+$('#btnMark').addEventListener('click', addMark);
+$('#btnAddMark').addEventListener('click', addMark);
+$('#btnTimer').addEventListener('click', () => {
+  const i = TIMER_STEPS.indexOf(prefs.timer);
+  prefs.timer = TIMER_STEPS[(i + 1) % TIMER_STEPS.length];
+  resetTimer();
+  commitPrefs(false);
+  toast(prefs.timer === 'off' ? 'Auto-pause off'
+      : prefs.timer === 'chapter' ? 'Will pause at the end of the chapter'
+      : `Will pause after ${prefs.timer} min of reading`);
+});
+setInterval(updateTimerBtn, 1000);
+
+document.addEventListener('gesturestart', e => e.preventDefault());
+addEventListener('resize', () => { applySize(); fit(); });
+addEventListener('pagehide', () => { savePos(true); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (S.playing) pause(); savePos(true); }
+});
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+async function boot(){
+  applyPrefs();
+  requestAnimationFrame(() => { applySize(); fit(); });      // re-measure once the layout exists
+  el.play.innerHTML = ICON_PLAY;
+  paint('Welcome', 2);
+  setupPWA();
+  // Ask the browser not to evict our storage when the device is short on space.
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
+  await migrateLegacy();
+  renderLibrary();
+  let restored = false;
+  try {
+    let id = loadJSON('rsvp.current', '');
+    if (!lib.some(b => b.id === id)) id = lib.length ? [...lib].sort((a, b) => b.opened - a.opened)[0].id : '';
+    if (id) {
+      const doc = await DB.get('book:' + id);
+      if (doc && doc.words && doc.words.length) { await loadDoc(doc, { pos: bookPos(id) }); restored = true; }
+    }
+  } catch (e) { /* nothing stored yet */ }
+  if (!restored) openDrawer('lib');
+}
+boot();
+})();
+</script>
+</body>
+</html>
